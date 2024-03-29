@@ -6,14 +6,13 @@
 
 
 ### set working directory to local path
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 
 ###----------------------------------------------------------------------------------------------------
 ### Load packages
 ###----------------------------------------------------------------------------------------------------
 library(sf)
-library(remotes)
 # remotes::install_github('ocean-tracking-network/glatos', build_vignettes = TRUE)
 library(glatos)
 # install.packages("devtools")
@@ -24,7 +23,6 @@ library(raster)
 library(move)
 library(actel)
 library(RSP)
-library(magrittr)
 library(data.table)
 library(tidyverse)
 ###----------------------------------------------------------------------------------------------------
@@ -397,18 +395,18 @@ true_sf <- st_as_sf(sim_comp_full,
                     remove = F)
 
 # add region to point data
-true_sf_regions <- st_join(true_sf,
+true_occ_sf <- st_join(true_sf,
                            lc_regions_short[c("regions","area_sqkm")],
                            left = T) 
 
 # assign interpolated points with NA region to regions using set_region function
-true_sf_regions <- set_region(data = true_sf_regions,
-                              regions = true_sf_regions$regions,
-                              latitude = true_sf_regions$true_lat,
-                              longitude = true_sf_regions$true_lon)
+true_occ_sf <- set_region(data = true_occ_sf,
+                          regions = true_occ_sf$regions,
+                          latitude = true_occ_sf$true_lat,
+                          longitude = true_occ_sf$true_lon)
 
 # calculate true regional use
-true_use <- data.frame(true_sf_regions) %>% 
+true_occ <- data.frame(true_occ_sf) %>% 
   group_by(virt_fish) %>% 
   mutate(total_positions = as.numeric(length(geometry)),
          animal_id = paste0("sim_",virt_fish)) %>% 
@@ -424,7 +422,7 @@ true_use <- data.frame(true_sf_regions) %>%
          virt_fish = NULL) %>% 
   ungroup()
 
-summary(true_use)
+summary(true_occ)
 ###----------------------------------------------------------------------------------------------------
 
 
@@ -594,7 +592,7 @@ sim_rsp <- runRSP(test_actel,
 ### Model 1: Basic residency index (Base)
 ###----------------------------------------------------------------------------------------------------
 ### load original data
-sim_base <- readRDS("outputs/ModelEstimates/sim_base.rds") 
+sim_base <- readRDS("outputs/model_estimates/sim_base.rds") 
 
 ### calculate percent of all detections detected at each region for each fish
 # Count total detections in each region for each fish and season*year
@@ -631,7 +629,7 @@ str(sim_base_region_full)
 ### Model 2: Last observation carried forward (LOCF)
 ###----------------------------------------------------------------------------------------------------
 ### load original data
-sim_locf <- readRDS("outputs/ModelEstimates/sim_locf.rds")
+sim_locf <- readRDS("outputs/model_estimates/sim_locf.rds")
 
 ### calculate percent of time spent in each region for each fish
 # calculate total time 
@@ -669,7 +667,7 @@ str(sim_locf_region_full)
 ###----------------------------------------------------------------------------------------------------
 ### Data preparation
 # Load vTrack data
-sim_coa <- readRDS("outputs/ModelEstimates/sim_coa.rds")
+sim_coa <- readRDS("outputs/model_estimates/sim_coa.rds")
 
 # Run COA for 60 minute timesteps
 sim_COA_60 <- COA(sim_coa, timestep = 60)
@@ -753,7 +751,7 @@ str(sim_coa_region_full)
 ### Model 4: Standardized detections: linear/non-linear interpolated path (Int)
 ###----------------------------------------------------------------------------------------------------
 # Load data
-sim_int <- readRDS("outputs/ModelEstimates/sim_int.rds")
+sim_int <- readRDS("outputs/model_estimates/sim_int.rds")
 
 
 ### Interpolate path for each year with 30 min (1800 sec) & 60 min (3600 sec) timestamp
@@ -825,7 +823,7 @@ sim_int_region_full <- sim_int_region_full %>%
 ### Model 5: move dynamic Brownian Bridge Movement Model (Move)
 ###----------------------------------------------------------------------------------------------------
 ### Load data
-sim_move <- readRDS("outputs/ModelEstimates/sim_move.rds")
+sim_move <- readRDS("outputs/model_estimates/sim_move.rds")
 
 ### Create underlying raster layer 
 ext <- raster::extent(st_bbox(outline_sf))
@@ -1006,7 +1004,7 @@ sim_region_move_full <- data.frame(dBBMM_lake) %>%
 ### Model 6: RSP dynamic Brownian Bridge Movement Model (RSP)
 ###----------------------------------------------------------------------------------------------------
 # load data
-sim_rsp <- readRDS(file = "outputs/ModelEstimates/sim_rsp.rds")
+sim_rsp <- readRDS(file = "outputs/model_estimates/sim_rsp.rds")
 
 # run dBBMM
 rsp_dBBMM <- dynBBMM(input = sim_rsp,
