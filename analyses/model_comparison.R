@@ -5,20 +5,21 @@
 ###----------------------------------------------------------------------------------------------------
 
 ### set working directory to local path
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+# setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 
 ###----------------------------------------------------------------------------------------------------
 ### Load packages
 ###----------------------------------------------------------------------------------------------------
-library(sf)
 library(raster)
-library(lemon)
-library(glmmTMB)
-library(MuMIn)
-library(emmeans)
 library(magrittr)
 library(data.table)
+
+library(sf)
+library(lemon)
+library(emmeans)
+library(MuMIn)
+library(glmmTMB)
 library(tidyverse)
 ###----------------------------------------------------------------------------------------------------
 
@@ -26,19 +27,39 @@ library(tidyverse)
 ###----------------------------------------------------------------------------------------------------
 ### load data
 ###----------------------------------------------------------------------------------------------------
+### load lake map data
+lc_regions <- st_read(dsn = "data/Shapefiles",
+                      layer = "ChamplainRegions")
+
+lc_regions_short <- lc_regions %>% 
+  mutate(regions = case_when(GNIS_NAME %in% c("Inland_Sea","Gut","NE_Channel") ~ "Northeast Arm",
+                             GNIS_NAME %in% "Missisquoi" ~ "Missisquoi Bay",
+                             GNIS_NAME %in% "Main_North" ~ "Main Lake North",
+                             GNIS_NAME %in% "Main_Central" ~ "Main Lake Central",
+                             GNIS_NAME %in% "Main_South" ~ "Main Lake South",
+                             GNIS_NAME %in% "Malletts" ~ "Malletts Bay",
+                             GNIS_NAME %in% "South_Lake" ~ "South Lake")) %>% 
+  group_by(regions) %>% 
+  summarize(geometry = sf::st_union(geometry),
+            area_sqkm = sum(AREASQKM)) %>% 
+  mutate(regions = factor(regions,
+                          levels = c("Missisquoi Bay", "Northeast Arm", "Malletts Bay", 
+                                     "Main Lake North", "Main Lake Central", "Main Lake South", "South Lake")))
+
+
 ### load model occupancy estimates
-sim_base_region_full <- read_rds(file = "outputs/model_estimates/sim_base_region_full.rds")
-sim_locf_region_full <- read_rds(file = "outputs/model_estimates/sim_locf_region_full.rds")
-sim_coa_region_full <- read_rds(file = "outputs/model_estimates/sim_coa_region_full.rds")
-sim_int_region_full <- read_rds(file = "outputs/model_estimates/sim_int_region_full.rds")
-sim_move_region_full <- read_rds(file = "outputs/model_estimates/sim_move_region_full.rds")
-sim_rsp_region_full <- read_rds(file = "outputs/model_estimates/sim_rsp_region_full.rds")
+sim_base_region_full <- readRDS(file = "outputs/model_estimates/sim_base_region_full.rds")
+sim_locf_region_full <- readRDS(file = "outputs/model_estimates/sim_locf_region_full.rds")
+sim_coa_region_full <- readRDS(file = "outputs/model_estimates/sim_coa_region_full.rds")
+sim_int_region_full <- readRDS(file = "outputs/model_estimates/sim_int_region_full.rds")
+sim_move_region_full <- readRDS(file = "outputs/model_estimates/sim_move_region_full.rds")
+sim_rsp_region_full <- readRDS(file = "outputs/model_estimates/sim_rsp_region_full.rds")
 
 # load true occupancy data
-true_use <- readRDS(file = "outputs/simulations/simulated_true_data.rds")
+true_occ <- readRDS(file = "outputs/simulations/simulated_true_data.rds")
 
 # load metadata
-metadata <- readRDS(paste0(path.sim, "simulations_metadata.rds")) %>% 
+metadata <- readRDS(file = "outputs/simulations/simulations_metadata.rds") %>% 
   rename("animal_id" = sim_id)
 
 
@@ -60,13 +81,13 @@ model_est <- bind_rows(sim_base_region_full,
                        sim_rsp_region_full)
 
 # add true region use and calculate total and regional simulation duration
-model_full <- true_use %>% 
+model_full <- true_occ %>% 
   select(animal_id,regions,region_positions,total_positions) %>% 
   right_join(model_est) %>% 
   mutate(region_dur = region_positions*127, # calculate duration by region for each simulation (127 = transmission delay (120 sec) + transmission duration (7 sec))   
          total_dur = total_positions*127, # calculate total duration of simulation in seconds
          region_wt = region_dur/total_dur, # calculate proportion of time spent in each region
-         abs_error_per = abs(region_percent-(region_wt*100)), # calculate absolute model error for each sim/region ***** THINK ABOUT THIS ****
+         abs_error_per = abs(region_percent-(region_wt*100)), # calculate absolute model error for each sim/region 
          act_error_per = region_percent-(region_wt*100),
          wt_abs_error = abs_error_per*region_wt, # calculate occupancy error for each sim/region/model
          wt_act_error = act_error_per*region_wt) # calculate actual weighted error
@@ -76,7 +97,7 @@ str(model_full)
 
 
 ###----------------------------------------------------------------------------------------------------
-### Criteria 1: Weighted mean occupancy error (MOE) 
+### Criterion 1: Weighted mean occupancy error (MOE) 
 ###----------------------------------------------------------------------------------------------------
 ### calculate MOE for each simulation per model
 # calculate indvidual error for each simulation/region
@@ -158,7 +179,7 @@ mod_p_moe_df
 ###----------------------------------------------------------------------------------------------------
 ### Unique regions used by each track
 # calculate average use for true distribution and modeled distribution
-ave_reg_use <- true_use %>% 
+ave_reg_use <- true_occ %>% 
   group_by(regions) %>%
   reframe(per_use = mean(percent_region_use),
           sd_use = sd(percent_region_use),
@@ -207,7 +228,7 @@ ave_err <- model_full %>%
   arrange(regions, model)
 
 # calculate difference between estimated use and true use
-full_diff <- true_use %>% 
+full_diff <- true_occ %>% 
   rename("true_percent" = percent_region_use) %>% 
   left_join(model_est) %>% 
   mutate(diff = region_percent - true_percent,
@@ -304,7 +325,7 @@ mod_abs_df <- data.frame(mod_sum_abs$coefficients$cond) %>%
 
 mod_abs_df
 
-# emmeans to test pairwise comparisons **** REDO EMMEANS WITH TRUE ERROR??? *****
+# emmeans to test pairwise comparisons
 mod_emm_abs <- emmeans(best_meta_abs, specs = c("regions","model"))
 mod_p_abs <- pwpm(mod_emm_abs)
 
@@ -314,228 +335,121 @@ mod_p_abs_df <- matrix(mod_p_abs,
   data.frame()
 ###----------------------------------------------------------------------------------------------------
 
-##### Start here
+
 ###----------------------------------------------------------------------------------------------------
-### Daily region assignment accuracy
+### Criterion 4: Daily region assignment error
 ###----------------------------------------------------------------------------------------------------
 ### Determine actually daily zone assignment
 # load simulated transmissions
-true_sf_regions <- readRDS(paste0(path.sim,"simulated_trans_regions.rds"))
+true_occ_sf <- readRDS("outputs/simulations/simulated_occ_sf.rds")
 
 # convert to df
-true_df <- true_sf_regions %>% 
+true_occ_df <- true_occ_sf %>% 
   mutate(geometry = NULL) %>% 
   data.frame()
 
 # quantify daily region transmissions
-true_daily_regions <- true_df %>% 
-  mutate(day = ceiling(time/86400)) %>%
-  group_by(virt_fish,regions,day) %>% 
+true_daily_regions <- true_occ_df %>% 
+  mutate(day_n = ceiling(time/86400)) %>%
+  group_by(virt_fish,regions,day_n) %>% 
   summarize(points = n_distinct(time)) %>% 
   ungroup() %>% 
   unique()
 
 # select region with greatest number of points for each day/simulation
 max_daily_regions <- true_daily_regions %>% 
-  group_by(virt_fish,day) %>% 
+  group_by(virt_fish,day_n) %>% 
   mutate(max_pt = max(points),
          is_max = if_else(points %in% max_pt, 1, 0),
          sim_id = paste0("sim_",virt_fish),
          sim_id = factor(sim_id,
                          levels = unique(sim_id))) %>% 
   ungroup() %>% 
-  group_by(sim_id, day) %>% 
+  group_by(sim_id, day_n) %>% 
   filter(is_max %in% 1) %>% 
   reframe(regions = regions[1]) %>% 
-  rename("true_region" = regions) %>% 
+  rename(true_region = regions) %>% 
   unique()
 
 ### Determine daily region assignment for each simulation/model
-# base model  ### --- CAN SKIP THIS MODEL ??? ---
-sim_locf <- readRDS(paste0(path.sim,"sim_locf_detections.rds"))
+# Base model
+sim_base <- readRDS("outputs/model_estimates/sim_base.rds") 
 
-# daily assignment
-daily_dist_base <- sim_locf %>%
-  mutate(day = yday(detection_timestamp_utc)) %>%
-  rename("sim_id" = animal_id) %>%
-  group_by(sim_id,regions,day) %>%
-  reframe(points = sum(time_diff2)) %>%
-  group_by(sim_id, day) %>% 
-  filter(points %in% max(points)) %>% 
-  reframe(points = max(points),
-          regions = regions[1]) %>% 
+sim_base_daily <- sim_base %>% 
+  mutate(day_n = yday(detection_timestamp_utc)) %>% 
+  group_by(day_n, regions, sim_id) %>% 
+  reframe(n_dets = n_distinct(detection_timestamp_utc)) %>% 
+  group_by(day_n, sim_id) %>% 
+  filter(n_dets == max(n_dets)) %>% 
+  ungroup() %>% 
+  mutate(model = "base") %>% 
+  select(sim_id,regions,day_n,model) %>%
   unique()
 
-# # Identify duplicated dates by sim id
-# t <- daily_dist_base %>% select(sim_id,day) %>% arrange(sim_id,day) %>% duplicated() %>% data.frame()
+# LOCF model
+sim_locf <- readRDS("outputs/model_estimates/sim_locf.rds")
 
-# select region with greatest number of points for each day/simulation
-max_daily_base <- daily_dist_base %>%
-  # group_by(sim_id,day) %>%
-  mutate(# max_pt = max(points),
-    # is_max = if_else(points %in% max_pt, 1, 0),
-    model = "base") %>%
-  # filter(is_max %in% 1) %>%
-  # ungroup() %>%
-  select(sim_id,regions,day,model) %>%
-  unique()
-
-
-# COA
-load(paste0(path.sim, "simulated_COA_data.Rdata"), verbose = T)
-
-# determine regional duration
-coa_reform <- sim_coa_df_regions %>% 
-  rename("detection_timestamp_utc" = TimeStep.coa,
-         "deploy_lat" = latitude,
-         "deploy_long" = longitude) %>% 
-  mutate(glatos_array = regions)
-
-# calculate time of detection events
-coa_events <- detection_events(coa_reform,
-                               condense = F)
-
-# convert NA values for timediff to equal difference in time
-coa_locf <- coa_events %>% 
-  mutate(event2 = if_else(arrive %in% 1, event-1, event)) %>% 
-  group_by(animal_id,event2) %>% 
-  mutate(time_diff = duration(time_diff, units = "seconds"),
-         time_diff2 = if_else(is.na(time_diff), 
-                              detection_timestamp_utc - lag(detection_timestamp_utc), 
-                              time_diff),
-         time_diff_fin = if_else(time_diff2 > 86400,
-                                 period_to_seconds(hms(format(as.POSIXct(detection_timestamp_utc),
-                                                              format = "%H:%M:%S"))),
-                                 as.numeric(time_diff2)))
-
-# daily assignment
-daily_dist_coa <- coa_locf %>% 
-  mutate(day = yday(detection_timestamp_utc)) %>%
+sim_locf_daily <- sim_locf %>% 
+  mutate(day_n = yday(detection_timestamp_utc)) %>%
   rename("sim_id" = animal_id) %>% 
-  group_by(sim_id,regions,day) %>% 
-  reframe(points = sum(time_diff2, na.rm = T)) %>% 
-  group_by(sim_id, day) %>% 
-  filter(points %in% max(points)) %>% 
-  reframe(points = max(points),
-          regions = regions[1]) %>% 
+  group_by(sim_id, regions, day_n) %>% 
+  reframe(duration = sum(time_diff2,na.rm = T)) %>% 
+  group_by(day_n, sim_id) %>% 
+  filter(duration == max(duration)) %>% 
+  ungroup() %>% 
+  select(sim_id,regions,day_n) %>%
+  unique() %>% 
+  right_join(max_daily_regions[,c("sim_id","day_n")]) %>% # add all dates
+  arrange(sim_id,day_n) %>% 
+  mutate(regions = zoo::na.locf(regions), # fill region for added dates based on last observed region
+         model = "locf") 
+
+# COA model
+sim_coa_df_regions <- readRDS("outputs/model_estimates/sim_coa_regions.rds")
+
+sim_coa_daily <- sim_coa_df_regions %>% 
+  rename(sim_id = animal_id) %>% 
+  mutate(day_n = yday(TimeStep.coa)) %>% 
+  group_by(day_n, regions, sim_id) %>% 
+  reframe(n_dets = n_distinct(TimeStep.coa)) %>% 
+  group_by(day_n, sim_id) %>% 
+  filter(n_dets == max(n_dets)) %>% 
+  ungroup() %>% 
+  mutate(model = "coa") %>% 
+  select(sim_id,regions,day_n,model) %>%
   unique()
 
-# # fill missing dates based on last observed region - skip because we don't want to fill undetected days
-# daily_coa_full <- max_daily_regions[,c("sim_id","day")] %>% 
-#   left_join(daily_dist_coa) %>% 
-#   arrange(sim_id,day) %>% 
-#   mutate(regions = zoo::na.locf(regions),
-#          points = zoo::na.locf(points))
+# Int Model
+sim_int_df_regions <- readRDS("outputs/model_estimates/sim_int_regions.rds")
 
-
-# select region with greatest number of points for each day/simulation
-max_daily_coa <- daily_dist_coa %>% 
-  # group_by(sim_id,day) %>% 
-  mutate(# max_pt = max(points),
-    # is_max = if_else(points %in% max_pt, 1, 0),
-    model = "coa") %>% 
-  # filter(is_max %in% 1) %>% 
-  # ungroup() %>% 
-  select(sim_id,regions,day,model) %>% 
-  unique()
-
-
-# LOCF
-sim_locf <- readRDS(paste0(path.sim,"sim_locf_detections.rds")) 
-
-# daily assignment
-daily_dist_locf <- sim_locf %>% 
-  mutate(day = yday(detection_timestamp_utc)) %>%
-  rename("sim_id" = animal_id) %>% 
-  group_by(sim_id,regions,day) %>% 
-  reframe(points = sum(time_diff2,na.rm = T)) %>% 
-  group_by(sim_id, day) %>% 
-  filter(points %in% max(points)) %>% 
-  reframe(points = max(points),
-          regions = regions[1]) %>% 
-  unique()
-
-# fill missing dates based on last observed region
-daily_locf_full <- max_daily_regions[,c("sim_id","day")] %>% 
-  left_join(daily_dist_locf) %>% 
-  arrange(sim_id,day) %>% 
-  mutate(regions = zoo::na.locf(regions),
-         points = zoo::na.locf(points))
-
-# select region with greatest number of points for each day/simulation
-max_daily_locf <- daily_locf_full %>% 
-  # group_by(sim_id,day) %>% 
-  mutate(# max_pt = max(points),
-    # is_max = if_else(points %in% max_pt, 1, 0),
-    model = "locf") %>% 
-  # filter(is_max %in% 1) %>% 
-  # ungroup() %>% 
-  select(sim_id,regions,day,model) %>% 
-  unique()
-
-
-# nlINT
-load(file = paste0(path.sim, "simulated_GLATOS_data.Rdata"), verbose = T)
-
-# unique days by individual
-ud <- sim_int_df_full %>% 
-  mutate(day = yday(bin_timestamp)) %>% 
-  group_by(animal_id) %>% 
-  reframe(day_m = max(day),
-          day_n = n_distinct(day)) %>% 
-  unique()
-
-# View(ud)
-
-# daily assignment
-daily_dist_int <- sim_int_df_full %>% 
-  mutate(day = yday(bin_timestamp)) %>%
-  rename("sim_id" = animal_id) %>% 
-  group_by(sim_id,regions,day) %>% 
-  reframe(points = n_distinct(bin_timestamp)) %>% 
-  group_by(sim_id, day) %>% 
-  filter(points %in% max(points)) %>% 
-  reframe(points = max(points),
-          regions = regions[1]) %>% 
-  unique()
-
-# fill missing dates based on last observed region
-daily_int_full <- max_daily_regions[,c("sim_id","day")] %>% 
-  left_join(daily_dist_int) %>% 
-  arrange(sim_id,day) #%>% 
-# mutate(regions = zoo::na.locf(regions),
-#        points = zoo::na.locf(points))
-
-# select region with greatest number of points for each day/simulation
-max_daily_int <- daily_dist_int %>% 
-  # group_by(sim_id,day) %>% 
-  mutate(# max_pt = max(points),
-    # is_max = if_else(points %in% max_pt, 1, 0),
-    model = "int") %>% 
-  # filter(is_max %in% 1) %>% 
-  # ungroup() %>% 
-  select(sim_id,regions,day,model) %>% 
+sim_int_daily <- sim_int_df_regions %>% 
+  rename(sim_id = animal_id) %>% 
+  mutate(day_n = yday(bin_timestamp)) %>% 
+  group_by(day_n, regions, sim_id) %>% 
+  reframe(n_dets = n_distinct(bin_timestamp)) %>% 
+  group_by(day_n, sim_id) %>% 
+  filter(n_dets == max(n_dets)) %>% 
+  ungroup() %>% 
+  mutate(model = "int") %>% 
+  select(sim_id,regions,day_n,model) %>%
   unique()
 
 
 ### calculate daily accuracy
 # Merge daily distributions from all models and true daily assignment
-daily_assn <- bind_rows(max_daily_base,
-                        max_daily_coa,
-                        max_daily_locf,
-                        max_daily_int)
+daily_assn <- bind_rows(sim_base_daily,
+                        sim_locf_daily,
+                        sim_coa_daily,
+                        sim_int_daily)
 
 # Add true daily region assignment and calculate accuracy
 daily_accy <- left_join(max_daily_regions, daily_assn) %>% 
   mutate(correct = if_else(true_region == regions, 1, 0)) %>% 
-  group_by(sim_id,model) %>% 
-  summarize(day_n = max(day),
-            total_corr = sum(correct)) %>% 
+  group_by(sim_id, model) %>% 
+  summarize(day_n = max(day_n),
+            total_corr = sum(correct, na.rm = T)) %>% 
   unique() %>% 
   mutate(per_corr = total_corr*100/day_n,
-         model = factor(model,
-                        levels = c("base","locf","coa","int"),
-                        labels = c("Base","LOCF","COA","Int")),
          day_error = 100-per_corr) %>% 
   ungroup()
 
@@ -555,17 +469,14 @@ day_plot <- daily_accy %>%
 
 day_plot
 
-ggsave(plot = day_plot,
-       filename = paste0(path.figs,"dayerror_4mod_Jan2024.svg"))
+# ggsave(plot = day_plot,
+#        filename = paste0(path.figs,"dayerror_4mod_Mar2024.svg"))
 
 # summary of daily accuracy and stats comparison
 daily_accy %>% 
   group_by(model) %>% 
-  reframe(ave_cor = mean(day_error),
-          sd_cor = sd(day_error))
-
-shapiro.test(daily_accy$day_error)
-plot(lm(day_error~model, data = daily_accy))
+  reframe(ave_err = mean(day_error),
+          sd_err = sd(day_error))
 
 friedman.test(y = daily_accy$day_error, group = daily_accy$model, block = daily_accy$sim_id)
 
@@ -576,12 +487,12 @@ pairwise.wilcox.test(daily_accy$day_error, daily_accy$model,
 # average and percent of total days assigned
 sim_dur <- max_daily_regions %>% 
   group_by(sim_id) %>% 
-  reframe(dur = max(day))
+  reframe(dur = max(day_n))
 
 daily_assn %>%
   left_join(sim_dur) %>% 
   group_by(model,sim_id) %>% 
-  mutate(days = n_distinct(day)) %>% 
+  mutate(days = n_distinct(day_n)) %>% 
   ungroup() %>% 
   group_by(model) %>% 
   reframe(ave_days = mean(days),
@@ -593,14 +504,14 @@ daily_assn %>%
 
 
 ###----------------------------------------------------------------------------------------------------
-### Total percent occurrence by region
+### Criterion 5: Within-region occurrence error
 ###----------------------------------------------------------------------------------------------------
 ### Determine actually percent of simulations that used each region
 # load simulated transmissions
-true_sf_regions <- readRDS(paste0(path.sim,"simulated_trans_regions.rds"))
+true_occ_sf <- readRDS(paste0(path.sim,"simulated_trans_regions.rds"))
 
 # convert to df
-true_df <- true_sf_regions %>% 
+true_df <- true_occ_sf %>% 
   mutate(geometry = NULL) %>% 
   data.frame()
 
@@ -647,46 +558,6 @@ region_occ <- model_reg_oc %>%
 
 
 ###----------------------------------------------------------------------------------------------------
-### Evaluate error for non-zero occurrence ### SKIP
-###----------------------------------------------------------------------------------------------------
-#-- Error is likely largely diminished by 
-#-- accurate lack of presence for individuals
-#-- that don't show up in a region (lots of 
-#-- accurate 0s). This section assess model
-#-- accuracy when excluding true zeros to 
-#-- compare error for missed detections
-
-### Load full model output
-model_full <- readRDS(paste0(path.sim, "model_error_full_Feb2024.rds"))
-
-### Remove region/sim combos with no region occurrence
-dets_fail <- model_full %>% 
-  filter(total_region > 0) %>% 
-  mutate(model = factor(model,
-                        levels = c("Base","COA","LOCF","Int","Move","RSP")))
-
-
-fail_err_plot <- dets_fail %>% 
-  ggplot(aes(x = regions, y = occ_error)) +
-  geom_point(fill = "gray40", shape = 21, alpha = 0.6, size = 1,
-             position = position_dodge2(width = 0.4)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.3) +
-  facet_rep_wrap(~model,
-                 ncol = 2) +
-  labs(x = NULL,
-       y = "Model Error (%)") +
-  theme_classic()
-
-fail_err_plot
-
-ggsave(plot = fail_err_plot,
-       filename = paste0(path.figs,"fail_mod_error_region.svg"),
-       width = 7.5,
-       height = 6)
-###----------------------------------------------------------------------------------------------------
-
-
-###----------------------------------------------------------------------------------------------------
 ### Summary stats of simulated tracks
 ###----------------------------------------------------------------------------------------------------
 ### Duration of each track
@@ -709,9 +580,9 @@ reg_dur <- dur %>%
 
 ### Unique regions used by each track
 # region count
-true_use <- readRDS(file = paste0(path.sim,"simulated_true_data.rds"))
+true_occ <- readRDS(file = paste0(path.sim,"simulated_true_data.rds"))
 
-n_regs <- true_use %>% 
+n_regs <- true_occ %>% 
   filter(total_region > 0) %>% 
   group_by(virt_fish) %>% 
   reframe(n_region = n_distinct(regions))
@@ -727,7 +598,7 @@ n_regs %>%
           max_region = max(n_region))
 
 # regional distribution
-reg_use <- true_use %>% 
+reg_use <- true_occ %>% 
   # group_by(regions) %>% 
   # reframe(per_use = mean(percent_region),
   #         sd_use = sd(percent_region)) %>% 
@@ -746,7 +617,7 @@ ggsave(plot = reg_use,
        filename = paste0(path.figs,"true_regional_dist.svg"),
        width = 7.5, height = 2.25)
 
-ave_reg_use <- true_use %>% 
+ave_reg_use <- true_occ %>% 
   group_by(regions) %>%
   reframe(per_use = mean(percent_region),
           sd_use = sd(percent_region))
@@ -840,10 +711,10 @@ mean(reg_sum$per_cover)
 ### Relationship between coverage and error
 # load model and true distribution data
 model_est <- readRDS( file = paste0(path.sim, "model_regional_estimates.rds"))
-true_use <- readRDS(file = paste0(path.sim,"simulated_true_data.rds"))
+true_occ <- readRDS(file = paste0(path.sim,"simulated_true_data.rds"))
 
 # calculate difference between estimated use and true use
-full_diff <- true_use %>% 
+full_diff <- true_occ %>% 
   rename("true_percent" = percent_region) %>% 
   mutate(animal_id = paste0("sim_",virt_fish)) %>% 
   left_join(model_est) %>% 
@@ -890,10 +761,10 @@ full_diff_plot
 ### Unique regions used by each track
 # load model and true distribution data
 model_est <- readRDS( file = paste0(path.sim, "model_regional_estimates_Feb2024.rds"))
-true_use <- readRDS(file = paste0(path.sim,"simulated_true_data.rds"))
+true_occ <- readRDS(file = paste0(path.sim,"simulated_true_data.rds"))
 
 # calculate average use for true distribution and modeled distribution
-ave_reg_use <- true_use %>% 
+ave_reg_use <- true_occ %>% 
   group_by(regions) %>%
   reframe(per_use = mean(percent_region),
           sd_use = sd(percent_region),
