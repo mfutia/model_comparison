@@ -532,7 +532,7 @@ sim_vTrack <- sim_base %>%
   unique() 
 
 # Reformat VTrack script for current project data
-# trace(setupData, edit = T) # corrected code commented out at end of document (see lines 1113-1164)
+# trace(setupData, edit = T) # corrected code commented out at end of document (see lines 1144-1192)
 sim_coa_file <- VTrack::setupData(Tag.Detections = sim_base, 
                                   Tag.Metadata = sim_vTrack, 
                                   Station.Information = recs, 
