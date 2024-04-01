@@ -15,7 +15,6 @@
 library(sf)
 # remotes::install_github('ocean-tracking-network/glatos', build_vignettes = TRUE)
 library(glatos)
-# install.packages("devtools")
 # devtools::install_github("rossdwyer/VTrack")
 library(VTrack)
 # remotes::install_github("YuriNiella/RSP") 
@@ -133,7 +132,7 @@ recs_period <- recs %>%
 ### Load lake map
 ###----------------------------------------------------------------------------------------------------
 # setwd(paste(path.shp, "ChamplainOutline/",sep = ""))
-lc_outline <- st_read(dsn = "data/Shapefiles",
+lc_outline <- st_read(dsn = "data",
                       layer = "ChamplainOutline")
 
 outline_sf <- lc_outline[,c("GNIS_NAME","geometry")]
@@ -155,7 +154,7 @@ lc_raster <- rasterize(outline_sf, lc_raster)
 
 # load lake region polygon
 # setwd(paste0(path.shp, "ChamplainRegions/"))
-lc_regions <- st_read(dsn = "data/Shapefiles",
+lc_regions <- st_read(dsn = "data",
                       layer = "ChamplainRegions")
 
 lc_regions_short <- lc_regions %>% 
@@ -311,13 +310,11 @@ for(k in 1:100){
                                    detRngFun = pdrf, show_progress = T)
 }
 
+# convert each list of simulated detections into a data.frame
+sim_list <- lapply(sim, as.data.frame)
 
-
-# convert each simulated object into a data.frame
-sim_df <- lapply(sim, as.data.frame)
-
-# combine list into a single data.table object
-sim_df <- rbindlist(sim_df, fill = TRUE, idcol = "virt_fish")
+# combine list of each simulated detections data.frame into a single data.table object
+sim_df <- rbindlist(sim_list, fill = TRUE, idcol = "virt_fish")
 
 # assign initial regions to each simulation (virt_fish)
 sim_df <- sim_df %>% 
@@ -340,24 +337,23 @@ sim_dets <- data.frame(st_coordinates(sim_df$trns_geometry)) %>%
   rename("true_lon" = X,
          "true_lat" = Y)
 
-sim_df <- bind_cols(sim_df, sim_dets)
-
+sim_dets_df <- bind_cols(sim_df, sim_dets)
 
 # determine distance between receivers and simulated detections
-sim_df$dist <- geosphere::distHaversine(st_coordinates(sim_df$rec_geometry),st_coordinates(sim_df$trns_geometry))
+sim_dets_df$dist <- geosphere::distHaversine(st_coordinates(sim_dets_df$rec_geometry),st_coordinates(sim_dets_df$trns_geometry))
 
 
-### Structure sim data as vemco detection file
+### Structure sim detection data as vemco detection file
 # Assign StationNames to detections
-sim_full <- left_join(sim_df, recs_short)
+sim_dets_full <- left_join(sim_dets_df, recs_short)
 
 
-### reformat sim_full dataframe
+### reformat sim_dets_full dataframe
 # create initial period to build detection timestamp from
 start_time <- as.POSIXct("2022-01-01 00:00:00", format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
 
 # create new columns, set factors, and select final columns
-sim_data <- sim_full %>% 
+sim_dets_data <- sim_dets_full %>% 
   mutate(detection_timestamp_utc = start_time + time,
          sim_id = paste("sim", virt_fish, sep = "_")) %>% 
   mutate(sim_id = factor(sim_id),
@@ -365,10 +361,10 @@ sim_data <- sim_full %>%
   select(sim_id,start_region,deploy_lon,deploy_lat,true_lon,true_lat,StationName,detection_timestamp_utc,trns_id)
 
 
-### create new file for complete dataset
-sim_full_list <- lapply(trans, as.data.frame)
+### create new file for complete dataset of all transmission locations
+sim_transmissions_list <- lapply(trans, as.data.frame)
 
-sim_full_df <- rbindlist(sim_full_list, fill = TRUE, idcol = "virt_fish")
+sim_transmissions_df <- rbindlist(sim_transmissions_list, fill = TRUE, idcol = "virt_fish")
 
 ### create new file for raw positions
 sim_pos_list <- lapply(paths, as.data.frame)
@@ -378,15 +374,34 @@ sim_pos_df <- rbindlist(sim_pos_list, fill = T, idcol = "virt_sim")
 
 
 ###----------------------------------------------------------------------------------------------------
-### Calculate actual time spent in regions
+### Summary stats of simulated tracks
 ###----------------------------------------------------------------------------------------------------
-### Determine actual time in regions from paths file
+### Duration of each track
+sim_transmissions_df <- sim_transmissions_df %>% 
+  mutate(sim_id = paste0("sim_",virt_fish))
+
+dur <- sim_transmissions_df %>% 
+  mutate(start_region = case_when(virt_fish %in% 1:20 ~ "NEA",
+                                  virt_fish %in% 21:40 ~ "MLN",
+                                  virt_fish %in% 41:60 ~ "MLC",
+                                  virt_fish %in% 61:80 ~ "MLS",
+                                  virt_fish %in% 81:100 ~ "MLB")) %>% 
+  group_by(virt_fish,start_region) %>% 
+  reframe(duration = max(time)/86400)
+
+region_duration <- dur %>% 
+  group_by(start_region) %>% 
+  reframe(ave_dur = mean(duration),
+          sd = sd(duration))
+
+
+### Determine actual time in regions from simulated transmissions
 # create columns for coordinates
-true_coords <- data.frame(st_coordinates(sim_full_df$geometry)) %>% 
+true_coords <- data.frame(st_coordinates(sim_transmissions_df$geometry)) %>% 
   rename("true_lon" = X,
          "true_lat" = Y)
 
-sim_comp_full <- bind_cols(sim_full_df, true_coords)
+sim_comp_full <- bind_cols(sim_transmissions_df, true_coords)
 
 # assign true positions to regions
 true_sf <- st_as_sf(sim_comp_full,
@@ -396,8 +411,8 @@ true_sf <- st_as_sf(sim_comp_full,
 
 # add region to point data
 true_occ_sf <- st_join(true_sf,
-                           lc_regions_short[c("regions","area_sqkm")],
-                           left = T) 
+                       lc_regions_short[c("regions","area_sqkm")],
+                       left = T) 
 
 # assign interpolated points with NA region to regions using set_region function
 true_occ_sf <- set_region(data = true_occ_sf,
@@ -405,43 +420,75 @@ true_occ_sf <- set_region(data = true_occ_sf,
                           latitude = true_occ_sf$true_lat,
                           longitude = true_occ_sf$true_lon)
 
-# calculate true regional use
+# calculate true regional occupancy
 true_occ <- data.frame(true_occ_sf) %>% 
   group_by(virt_fish) %>% 
-  mutate(total_positions = as.numeric(length(geometry)),
-         animal_id = paste0("sim_",virt_fish)) %>% 
+  mutate(total_positions = as.numeric(length(geometry))) %>% 
   ungroup() %>% 
-  group_by(animal_id,regions,total_positions,
-           .drop = F) %>% 
+  group_by(virt_fish,regions,total_positions, .drop = F) %>% 
   reframe(region_positions = as.numeric(length(geometry))) %>% 
-  group_by(animal_id) %>% 
+  group_by(virt_fish) %>% 
   mutate(total_positions = max(total_positions, na.rm = T),
-         percent_region_use = region_positions*100/total_positions,
+         percent_region_occ = region_positions*100/total_positions,
          region_positions = if_else(is.na(region_positions),0,region_positions),
-         percent_region_use = if_else(is.na(percent_region_use),0,percent_region_use),
-         virt_fish = NULL) %>% 
+         percent_region_occ = if_else(is.na(percent_region_occ),0,percent_region_occ)) %>% 
   ungroup()
 
 summary(true_occ)
+
+
+### Unique regions used by each track 
+# region count
+n_regions <- true_occ %>% 
+  filter(region_positions > 0) %>% 
+  group_by(virt_fish) %>% 
+  reframe(n_region = n_distinct(regions))
+
+n_regions %>% 
+  mutate(start_region = case_when(virt_fish %in% 1:20 ~ "NEA",
+                                  virt_fish %in% 21:40 ~ "MLN",
+                                  virt_fish %in% 41:60 ~ "MLC",
+                                  virt_fish %in% 61:80 ~ "MLS",
+                                  virt_fish %in% 81:100 ~ "MLB")) %>% 
+  group_by(start_region) %>% 
+  reframe(min_region = min(n_region),
+          max_region = max(n_region))
+
+
+### View regional distribution
+true_occ %>% 
+  ggplot(aes(x = regions, y = percent_region_occ)) +
+  geom_point(shape = 21, fill = "gray40", alpha = 0.6,
+             position = position_dodge2(width = 0.4)) +
+  geom_boxplot(outlier.shape = NA,
+               alpha = 0.3) +
+  labs(x = NULL,
+       y = "Distribution (%)") +
+  theme_classic()
+
+ave_reg_use <- true_occ %>% 
+  group_by(regions) %>%
+  reframe(per_use = mean(percent_region_occ),
+          sd_use = sd(percent_region_occ))
 ###----------------------------------------------------------------------------------------------------
 
 
 ###----------------------------------------------------------------------------------------------------
 ### Generate data frames to use for each model
 ###----------------------------------------------------------------------------------------------------
-### load simulation data
-sim_data <- readRDS("data/simulated_detections.rds")
+### load simulation detection data
+sim_dets_data <- readRDS("outputs/Simulations/simulated_detections.rds")
 
 ### detection data
 # Calculate the elapsed time (seconds) between detections
-sim_data <- sim_data %>%
+sim_dets_data <- sim_dets_data %>%
   group_by(sim_id) %>% 
   arrange(detection_timestamp_utc) %>%
   mutate(diff = detection_timestamp_utc - lag(detection_timestamp_utc, default = first(detection_timestamp_utc))) %>% 
   ungroup()
 
 # remove duplicated detections
-sim_reduce <- sim_data %>%
+sim_reduce <- sim_dets_data %>%
   filter(diff > 60 | trns_id %in% 1)
 
 # remove detections at tributary receivers that are not included in analyses
@@ -485,16 +532,30 @@ sim_vTrack <- sim_base %>%
   unique() 
 
 # Reformat VTrack script for current project data
-# trace(setupData, edit = T) # corrected code commented out at end of document (see lines 1116-1167)
-sim_coa <- VTrack::setupData(Tag.Detections = sim_base, 
-                                 Tag.Metadata = sim_vTrack, 
-                                 Station.Information = recs, 
-                                 source = "VEMCO")
+# trace(setupData, edit = T) # corrected code commented out at end of document (see lines 1113-1164)
+sim_coa_file <- VTrack::setupData(Tag.Detections = sim_base, 
+                                  Tag.Metadata = sim_vTrack, 
+                                  Station.Information = recs, 
+                                  source = "VEMCO")
 
 # view data
-sim_coa$Tag.Detections %>% View
-sim_coa$Tag.Metadata %>% View
-sim_coa$Station.Information %>% View
+sim_coa_file$Tag.Detections %>% View
+sim_coa_file$Tag.Metadata %>% View
+sim_coa_file$Station.Information %>% View
+
+# Run COA for 60 minute timesteps
+sim_coa_full <- COA(sim_coa_file, timestep = 60) # use "trace(COA, edit = T)" and add one second to "ex" object to avoid parsing failure
+
+# Wrangle df to change column names and remove empty columns
+sim_coa <- sim_coa_full %>% 
+  ungroup() %>% 
+  rename(animal_id = Tag.ID,
+         latitude = Latitude.coa,
+         longitude = Longitude.coa,
+         stations_n = Number.of.Stations,
+         detect_n = Number.of.Detections) %>% 
+  mutate(animal_id = factor(animal_id)) %>% 
+  select("animal_id","detect_n","latitude","longitude","Release.Date","stations_n","TimeStep.coa")
 
 
 ### LOCF
@@ -509,7 +570,7 @@ sim_locf <- sim_events %>%
 
 ### dBBMM
 # remove timestamps with duplicate occurrences
-sim_dets_nodups <- sim_data %>% 
+sim_dets_nodups <- sim_dets_data %>% 
   group_by(sim_id) %>% 
   arrange(detection_timestamp_utc) %>% 
   mutate(time_diff = c(NA,diff(detection_timestamp_utc))) %>% 
@@ -561,10 +622,8 @@ test_actel <- explore(actel_data_sim,
                       print.releases=FALSE,
                       tz = "UTC")
 
-test_actel$deployments
-
 # create transition layer used to make shortest paths
-lake_outline <- loadShape(path = "data/Shapefiles",
+lake_outline <- loadShape(path = "data",
                           shape = "ChamplainOutline.shp",
                           size = 0.001, # raster pixel size; not sure what the appropriate value is but this resolution looks appropriate and places all receivers in water 
                           spatial = recs_short,
@@ -602,7 +661,6 @@ sim_base_region <- sim_base %>%
   summarize(region_detect = length(detection_timestamp_utc)) %>%
   ungroup() %>% 
   unique() 
-
 
 # calculate total number of detections for each virtual id
 sim_total_detect <- aggregate(region_detect~animal_id, data = sim_base_region, FUN = sum) %>% 
@@ -666,39 +724,11 @@ str(sim_locf_region_full)
 ### Model 3: Centers of Activity (COA)
 ###----------------------------------------------------------------------------------------------------
 ### Data preparation
-# Load vTrack data
+# Load COA data
 sim_coa <- readRDS("outputs/model_estimates/sim_coa.rds")
 
-# Run COA for 60 minute timesteps
-sim_COA_60 <- COA(sim_coa, timestep = 60)
-
-# Wrangle df to change column names and remove empty columns
-sim_COA_60_ref <- sim_COA_60 %>% 
-  rename("animal_id" = Tag.ID,
-         "latitude" = Latitude.coa,
-         "longitude" = Longitude.coa,
-         "stations_n" = Number.of.Stations,
-         "detect_n" = Number.of.Detections) %>% 
-  mutate(animal_id = factor(animal_id),
-         Sensor.Unit = NULL,
-         Sensor.Value.coa = NULL,
-         Sci.Name = NULL,
-         Common.Name = NULL,
-         Tag.Project = NULL,
-         Release.Latitude = NULL,
-         Release.Longitude = NULL,
-         Tag.Life = NULL,
-         Tag.Status = NULL,
-         Bio = NULL,
-         Sex = NULL)
-
-str(sim_COA_60_ref)
-
-summary(sim_COA_60_ref)
-
-
 ### Assign COAs to regions
-sim_coa_sf <- st_as_sf(sim_COA_60_ref,
+sim_coa_sf <- st_as_sf(sim_coa,
                        coords = c("longitude","latitude"),
                        crs=4326,
                        remove = F)
@@ -786,16 +816,16 @@ sim_int_sf_regions %>%
 sim_int_sf_regions <- set_region(data = sim_int_sf_regions)
 
 # convert to data frame and edit data
-sim_int_df_full <- data.frame(sim_int_sf_regions) %>% 
+sim_int_df_regions <- data.frame(sim_int_sf_regions) %>% 
   mutate(animal_id = factor(animal_id))
 
-str(sim_int_df_full)
+str(sim_int_df_regions)
 
-summary(sim_int_df_full)
+summary(sim_int_df_regions)
 
 ### calculate percent of all detections located in each region for each fish
 # Count total detections in each region for each fish and season*year
-sim_int_region <- sim_int_df_full %>%
+sim_int_region <- sim_int_df_regions %>%
   group_by(animal_id, regions, .drop = F) %>%
   summarize(region_detect = length(bin_timestamp)) %>%
   ungroup() %>% 
@@ -806,7 +836,7 @@ sim_total_detect_int <- aggregate(region_detect~animal_id, data = sim_int_region
   rename("total_detect" = region_detect)
 
 # calculate average receiver latitude
-sim_rec_lat_int <- aggregate(latitude~regions, data = sim_int_df_full, FUN = mean)
+sim_rec_lat_int <- aggregate(latitude~regions, data = sim_int_df_regions, FUN = mean)
 
 # merge number of detections for each fish in each region with total detections for each fish 
 sim_int_region_full <- left_join(sim_int_region, sim_total_detect_int) %>% 
@@ -1112,7 +1142,7 @@ sim_rsp_region_full <- rsp_regions_ref %>%
 
 
 ###----------------------------------------------------------------------------------------------------
-### Code for updating VTrack loading function
+### Code for updating VTrack loading function (replace code from VTrack::setupData with the code below)
 ###----------------------------------------------------------------------------------------------------
 function (Tag.Detections, Tag.Metadata, Station.Information,
           source = NULL, tzone = "UTC", crs = NULL)
@@ -1159,7 +1189,4 @@ function (Tag.Detections, Tag.Metadata, Station.Information,
   }
   return(object)
 }
-
-trace(setupData, edit = T) # corrected code commented out at end of document
-
 ###----------------------------------------------------------------------------------------------------
