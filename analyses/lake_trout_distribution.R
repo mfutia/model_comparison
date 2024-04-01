@@ -17,6 +17,7 @@ library(glmmTMB)
 library(emmeans)
 library(MuMIn)
 library(glatos)
+library(data.table)
 library(tidyverse)
 ###----------------------------------------------------------------------------------------------------
 
@@ -294,7 +295,7 @@ rec_lat_int <- aggregate(latitude~regions, data = lkt_int_final, FUN = mean)
 # merge number of detections for each fish in each region with total detections for each fish 
 region_int_full_day <- left_join(region_int_day, total_detect_int_day) %>% 
   left_join(rec_lat_int) %>% 
-  left_join(fish[,c("animal_id","cap_site","sex")]) # add cap site
+  left_join(fish_data[,c("animal_id","cap_site","sex")]) # add cap site
 
 # calculate seasonal percentage of detections in each basin for each fish
 region_int_full_day <- region_int_full_day %>% 
@@ -439,13 +440,13 @@ newdata <- bind_cols(newdat,est_use_df) %>%
          se_ul = exp(ul_logit)/(1+exp(ul_logit))*100) %>% 
   unique()
 
-
 sum_predict <- newdata %>% 
   group_by(regions, cap_site) %>% 
   reframe(ave_pred = mean(ave),
           sd_pred = sd(ave))
 
 sum_predict
+
 
 ### emmeans to test pairwise comparisons
 mod_emm_dist <- emmeans(best_meta_dist, specs = c("regions","cap_site"))
@@ -459,7 +460,7 @@ mod_p_dist_df <- matrix(mod_p_dist,
 
 ### Number of individuals from North and South capture sites with no use of region
 # number of fish tagged at each site
-stock_n <- fish %>% 
+stock_n <- fish_data %>% 
   filter(animal_id %in% region_int_final_day$animal_id) %>% 
   group_by(cap_site) %>% 
   reframe(n_fish = n_distinct(animal_id))
@@ -471,9 +472,7 @@ no_use <- lkt_region_season %>%
   reframe(region_percent = mean(region_percent)) %>% 
   filter(region_percent == 0) %>% 
   group_by(cap_site, regions) %>% 
-  reframe(n_zero = n_distinct(animal_id)#,
-          # fish_id = c(unique(animal_id))) %>% 
-  ) %>% 
+  reframe(n_zero = n_distinct(animal_id)) %>% 
   left_join(stock_n) %>% 
   mutate(per_zero = n_zero*100/n_fish)
 ###----------------------------------------------------------------------------------------------------
