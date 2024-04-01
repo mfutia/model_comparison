@@ -28,7 +28,7 @@ library(tidyverse)
 ### load data
 ###----------------------------------------------------------------------------------------------------
 ### load lake map data
-lc_regions <- st_read(dsn = "data/Shapefiles",
+lc_regions <- st_read(dsn = "data",
                       layer = "ChamplainRegions")
 
 lc_regions_short <- lc_regions %>% 
@@ -56,10 +56,10 @@ sim_move_region_full <- readRDS(file = "outputs/model_estimates/sim_move_region_
 sim_rsp_region_full <- readRDS(file = "outputs/model_estimates/sim_rsp_region_full.rds")
 
 # load true occupancy data
-true_occ <- readRDS(file = "outputs/simulations/simulated_true_data.rds")
+true_occ <- readRDS(file = "outputs/Simulations/simulated_true_data.rds")
 
 # load metadata
-metadata <- readRDS(file = "outputs/simulations/simulations_metadata.rds") %>% 
+metadata <- readRDS(file = "outputs/Simulations/simulations_metadata.rds") %>% 
   rename("animal_id" = sim_id)
 
 
@@ -82,7 +82,7 @@ model_est <- bind_rows(sim_base_region_full,
 
 # add true region use and calculate total and regional simulation duration
 model_full <- true_occ %>% 
-  select(animal_id,regions,region_positions,total_positions) %>% 
+  select(virt_fish,regions,region_positions,total_positions) %>% 
   right_join(model_est) %>% 
   mutate(region_dur = region_positions*127, # calculate duration by region for each simulation (127 = transmission delay (120 sec) + transmission duration (7 sec))   
          total_dur = total_positions*127, # calculate total duration of simulation in seconds
@@ -106,7 +106,6 @@ moe_total <- model_full %>%
   reframe(mean_wt_abs_err = sum(wt_abs_error)) %>% 
   mutate(model = factor(model,
                         levels = c("Base", "LOCF","COA", "Int", "Move", "RSP")))
-
 
 # plot error among models
 moe_plot <- moe_total %>% 
@@ -239,9 +238,9 @@ full_diff <- true_occ %>%
 
 ### map filling region by error
 map_error <- lc_regions_short %>% 
-  left_join(ave_err[,c("regions", "model", "act_mean")]) %>% # act_mean | abs_mean
+  left_join(ave_err[,c("regions", "model", "act_mean")]) %>%
   ggplot() +
-  geom_sf(aes(fill = act_mean)) + # act_mean | abs_mean
+  geom_sf(aes(fill = act_mean)) +
   facet_wrap(~model,
              nrow = 1)+
   scico::scale_fill_scico(palette = "vik", midpoint = 0)+
@@ -451,7 +450,9 @@ daily_accy <- left_join(max_daily_regions, daily_assn) %>%
   unique() %>% 
   mutate(per_corr = total_corr*100/day_n,
          day_error = 100-per_corr) %>% 
-  ungroup()
+  ungroup() %>% 
+  mutate(model = factor(model,
+                        levels = c("base", "locf", "coa", "int")))
 
 
 ### Plot accuracy and stats
@@ -506,28 +507,15 @@ daily_assn %>%
 ###----------------------------------------------------------------------------------------------------
 ### Criterion 5: Within-region occurrence error
 ###----------------------------------------------------------------------------------------------------
-### Determine actually percent of simulations that used each region
-# load simulated transmissions
-true_occ_sf <- readRDS(paste0(path.sim,"simulated_trans_regions.rds"))
-
-# convert to df
-true_df <- true_occ_sf %>% 
-  mutate(geometry = NULL) %>% 
-  data.frame()
-
-# calculate percent of fish that occupied each region
-true_reg_oc <- true_df %>% 
+### Determine  number of simulations that used each region
+# calculate actual percent of fish that occupied each region
+true_reg_occ <- true_occ_df %>% 
   group_by(regions) %>% 
   reframe(n_sim = n_distinct(virt_fish)) %>% 
   unique()
 
-
-### Determine modeled number of simulations that used each region
-# load regional model estimates
-model_est <- readRDS(file = paste0(path.sim, "model_regional_estimates_Feb2024.rds"))
-
 # calculate unique simulations by region*model
-model_reg_oc <- model_est %>% 
+model_reg_occ <- model_est %>% 
   filter(region_detect > 0) %>% 
   group_by(model, regions, .drop = F) %>% 
   reframe(n_sim_mod = n_distinct(animal_id)) %>% 
@@ -536,276 +524,12 @@ model_reg_oc <- model_est %>%
 
 ### Calculate error between true and modeled number occupied
 # join true and model data
-region_occ <- model_reg_oc %>% 
-  full_join(true_reg_oc) %>% 
-  mutate(oc_error = n_sim_mod - n_sim,
+region_occ <- model_reg_occ %>% 
+  full_join(true_reg_occ) %>% 
+  mutate(occ_error = n_sim_mod - n_sim,
          model = factor(model,
                         levels = c("Base","LOCF","COA","Int","Move","RSP"))) %>% 
   arrange(model)
 
-# write.csv(region_occ,
-#           file = paste0(path.result,"sims_per_region_Feb2024.csv"),
-#           row.names = F)
-
-# # plot error
-# ggplot(region_occ, aes(x = model, y = oc_error)) +
-#   geom_point(shape = 21, alpha = 0.8, size = 3,
-#              aes(fill = regions)) +
-#   scale_fill_manual(values = c('#8c510a','#f6e8c3','#bf812d','#80cdc1','#01665e','#35978f','#c7eae5'))+
-#   theme_classic()
-
-###----------------------------------------------------------------------------------------------------
-
-
-###----------------------------------------------------------------------------------------------------
-### Summary stats of simulated tracks
-###----------------------------------------------------------------------------------------------------
-### Duration of each track
-sim_full_df <- readRDS(paste0(path.sim,"complete_simulated_transmissions.rds")) %>% 
-  mutate(sim_id = paste0("sim_",virt_fish))
-
-dur <- sim_full_df %>% 
-  mutate(s_region = case_when(virt_fish %in% 1:20 ~ "NEA",
-                              virt_fish %in% 21:40 ~ "MLN",
-                              virt_fish %in% 41:60 ~ "MLC",
-                              virt_fish %in% 61:80 ~ "MLS",
-                              virt_fish %in% 81:100 ~ "MLB")) %>% 
-  group_by(virt_fish,s_region) %>% 
-  reframe(duration = max(time)/86400)
-
-reg_dur <- dur %>% 
-  group_by(s_region) %>% 
-  reframe(ave_dur = mean(duration),
-          sd = sd(duration))
-
-### Unique regions used by each track
-# region count
-true_occ <- readRDS(file = paste0(path.sim,"simulated_true_data.rds"))
-
-n_regs <- true_occ %>% 
-  filter(total_region > 0) %>% 
-  group_by(virt_fish) %>% 
-  reframe(n_region = n_distinct(regions))
-
-n_regs %>% 
-  mutate(s_region = case_when(virt_fish %in% 1:20 ~ "NEA",
-                              virt_fish %in% 21:40 ~ "MLN",
-                              virt_fish %in% 41:60 ~ "MLC",
-                              virt_fish %in% 61:80 ~ "MLS",
-                              virt_fish %in% 81:100 ~ "MLB")) %>% 
-  group_by(s_region) %>% 
-  reframe(min_region = min(n_region),
-          max_region = max(n_region))
-
-# regional distribution
-reg_use <- true_occ %>% 
-  # group_by(regions) %>% 
-  # reframe(per_use = mean(percent_region),
-  #         sd_use = sd(percent_region)) %>% 
-  ggplot(aes(x = regions, y = percent_region)) +
-  geom_point(shape = 21, fill = "gray40", alpha = 0.6,
-             position = position_dodge2(width = 0.4)) +
-  geom_boxplot(outlier.shape = NA,
-               alpha = 0.3) +
-  labs(x = NULL,
-       y = "Distribution (%)") +
-  theme_classic()
-
-reg_use
-
-ggsave(plot = reg_use,
-       filename = paste0(path.figs,"true_regional_dist.svg"),
-       width = 7.5, height = 2.25)
-
-ave_reg_use <- true_occ %>% 
-  group_by(regions) %>%
-  reframe(per_use = mean(percent_region),
-          sd_use = sd(percent_region))
-
-### Number/percent of detected transmissions
-dets <- readRDS(paste0(path.sim,"simulated_detections.rds"))
-
-sim_full_df <- readRDS(paste0(path.sim,"complete_simulated_transmissions.rds")) %>% 
-  mutate(sim_id = paste0("sim_",virt_fish)) %>% 
-  group_by(sim_id) %>% 
-  reframe(sim_full_df = length(time))
-
-n_dets <- dets %>% 
-  group_by(sim_id,start_region) %>% 
-  left_join(sim_full_df) %>% 
-  reframe(sim_full_df = length(detection_timestamp_utc),
-          sim_full_df = unique(sim_full_df),
-          p_dets = n_dets*100/sim_full_df)
-
-n_dets %>% 
-  group_by(start_region) %>% 
-  reframe(ave_dets = mean(p_dets),
-          sd_dets = sd(p_dets))
-
-### Summary of metadata
-metadata <- readRDS(paste0(path.sim, "simulations_metadata.rds"))
-
-metadata %>% 
-  group_by(start_region) %>% 
-  reframe(ave_theta = mean(theta),
-          sd_theta = sd(theta),
-          ave_vel = mean(velocity),
-          sd_vel = sd(velocity))
-###----------------------------------------------------------------------------------------------------
-
-
-###----------------------------------------------------------------------------------------------------
-### Receiver cover
-###----------------------------------------------------------------------------------------------------
-### Lake region detection probability
-lc_regions <- st_read(dsn = ".",
-                      layer = "ChamplainRegions")
-
-lc_regions_short <- lc_regions %>% 
-  mutate(regions = case_when(GNIS_NAME %in% c("Inland_Sea","Gut","NE_Channel") ~ "Northeast Arm",
-                             GNIS_NAME %in% "Missisquoi" ~ "Missisquoi Bay",
-                             GNIS_NAME %in% "Main_North" ~ "Main Lake North",
-                             GNIS_NAME %in% "Main_Central" ~ "Main Lake Central",
-                             GNIS_NAME %in% "Main_South" ~ "Main Lake South",
-                             GNIS_NAME %in% "Malletts" ~ "Malletts Bay",
-                             GNIS_NAME %in% "South_Lake" ~ "South Lake")) %>% 
-  group_by(regions) %>% 
-  summarize(geometry = sf::st_union(geometry),
-            area_sqkm = sum(AREASQKM)) %>% 
-  mutate(regions = factor(regions,
-                          levels = c("Missisquoi Bay", "Northeast Arm", "Malletts Bay", 
-                                     "Main Lake North", "Main Lake Central", "Main Lake South", "South Lake")))
-
-recs_loc <- readRDS(paste0(path.mvt,"OriginalReceiverSummary_2013-2017_May2023.rds")) %>% 
-  select(StationName,deploy_lat,deploy_long) %>% 
-  group_by(StationName) %>% 
-  reframe(lat = first(deploy_lat),
-          lon = first(deploy_long))
-
-
-recs_sf <- st_as_sf(recs_loc,
-                    coords = c('lon', 'lat'),
-                    crs = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
-
-reg_recs <- st_join(recs_sf,lc_regions_short) 
-
-reg_sum <- lc_regions_short %>% 
-  data.frame() %>% 
-  select(regions, area_sqkm) %>% 
-  left_join(reg_recs) %>% 
-  group_by(regions) %>% 
-  reframe(n_rec = if_else(is.na(StationName), 0,
-                          n_distinct(StationName)),
-          cover = n_rec*(pi*(0.250^2)),
-          rec_rate = n_rec/area_sqkm,
-          per_cover = cover*100/area_sqkm) %>% 
-  unique()
-
-# write.csv(reg_sum,
-#           paste0(path.result,"regional_cover.csv"),
-#           row.names = F)
-
-mean(reg_sum$per_cover)
-
-
-### Relationship between coverage and error
-# load model and true distribution data
-model_est <- readRDS( file = paste0(path.sim, "model_regional_estimates.rds"))
-true_occ <- readRDS(file = paste0(path.sim,"simulated_true_data.rds"))
-
-# calculate difference between estimated use and true use
-full_diff <- true_occ %>% 
-  rename("true_percent" = percent_region) %>% 
-  mutate(animal_id = paste0("sim_",virt_fish)) %>% 
-  left_join(model_est) %>% 
-  mutate(diff = region_percent - true_percent,
-         model = factor(model,
-                        levels = c("Base", "COA", "LOCF", "Int", "dBBMM", "RSP"),
-                        labels = c("Base", "COA", "LOCF", "Int", "move", "RSP"))) %>%
-  select(animal_id,model,regions,true_percent,region_percent,diff)
-
-# summary table of difference
-full_diff %>% 
-  group_by(regions,model) %>% 
-  reframe(mean_dff = mean(diff),
-          sd_diff = sd(diff)) %>% 
-  print(n = 42)
-
-# merge with receiver cover
-full_diff_rec <- full_diff %>% 
-  left_join(reg_sum)
-
-rec_cov_mod <- glmmTMB(diff~per_cover+model+(1|animal_id),
-                       data = full_diff_rec)
-
-summary(rec_cov_mod)
-
-# plot error for all simulation*model*region combos
-full_diff_plot <- full_diff_rec %>% 
-  ggplot(aes(x = per_cover, y = diff))+ 
-  geom_smooth(method = "lm", se = F, alpha = 0.8,
-              aes(color = model)) +
-  geom_hline(yintercept = 0, color = "gray75", linetype = "dashed") +
-  geom_point(size = 2.5, alpha = 0.6,
-             aes(fill = model, shape = model)) +
-  scale_fill_manual(values = c('#4477AA', '#EE6677', '#228833', '#CCBB44', '#66CCEE', '#AA3377')) +
-  scale_shape_manual(values = c(8,21:25)) +
-  scale_color_manual(values = c('#4477AA', '#EE6677', '#228833', '#CCBB44', '#66CCEE', '#AA3377')) +
-  labs(x = "Receiver Coverage (%)", y = "Average Model Error (%)") +
-  theme_classic()
-
-full_diff_plot
-
-
-
-### Unique regions used by each track
-# load model and true distribution data
-model_est <- readRDS( file = paste0(path.sim, "model_regional_estimates_Feb2024.rds"))
-true_occ <- readRDS(file = paste0(path.sim,"simulated_true_data.rds"))
-
-# calculate average use for true distribution and modeled distribution
-ave_reg_use <- true_occ %>% 
-  group_by(regions) %>%
-  reframe(per_use = mean(percent_region),
-          sd_use = sd(percent_region),
-          med_use = median(percent_region))
-
-est_reg <- model_est %>% 
-  group_by(regions,model,.drop = F) %>% 
-  reframe(ave_use = mean(region_percent),
-          sd_use = sd(region_percent))
-
-# calculate average regional difference in use for each method
-ave_diff <- est_reg %>% 
-  left_join(ave_reg_use[,c("regions","per_use")]) %>% 
-  mutate(diff = ave_use - per_use)
-
-# merge with receiver cover
-ave_diff_rec <- ave_diff %>% 
-  left_join(reg_sum)
-
-# plot difference as a function of receiver cover
-rec_diff <- ave_diff_rec %>% 
-  mutate(model = factor(model,
-                        levels = c("Base","COA","LOCF","Int","dBBMM","RSP"),
-                        labels = c("Base","COA","LOCF","Int","move","RSP"))) %>% 
-  ggplot(aes(x = per_cover, y = diff))+
-  # geom_smooth(method = "lm", se = F, alpha = 0.8,
-  #             aes(color = model)) +
-  geom_hline(yintercept = 0, color = "gray75", linetype = "dashed") +
-  geom_point(aes(fill = model, shape = model),
-             size = 2.5, alpha = 0.6)+
-  scale_fill_manual(values = c('#4477AA', '#EE6677', '#228833', '#CCBB44', '#66CCEE', '#AA3377')) +
-  scale_shape_manual(values = c(8,21:25)) +
-  # scale_color_manual(values = c('#4477AA', '#EE6677', '#228833', '#CCBB44', '#66CCEE', '#AA3377')) +
-  labs(x = "Receiver Coverage (%)", y = "Average Model Error (%)") +
-  theme_classic()
-
-rec_diff
-
-ggsave(plot = rec_diff,
-       filename = paste0(path.figs,"error_by_rec_cover.svg"),
-       scale = 1.25)
-
-aggregate(diff~per_cover+model, data = ave_diff_rec, FUN = mean)
+summary(region_occ)
 ###----------------------------------------------------------------------------------------------------
