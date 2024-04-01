@@ -1,0 +1,803 @@
+<?xml version="1.0" encoding="UTF-8"?><MD_Metadata xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:srv="http://www.isotc211.org/2005/srv" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:xalan="http://xml.apache.org/xalan" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gml="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.isotc211.org/2005/gmd">
+<fileIdentifier>
+<gco:CharacterString>1481664310519r7276354569943907</gco:CharacterString>
+</fileIdentifier>
+<language>
+<LanguageCode codeList="http://www.loc.gov/standards/iso639-2/php/code_list.php" codeListValue="eng" codeSpace="ISO639-2">eng</LanguageCode>
+</language>
+<characterSet>
+<MD_CharacterSetCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_CharacterSetCode" codeListValue="utf8" codeSpace="ISOTC211/19115">utf8</MD_CharacterSetCode>
+</characterSet>
+<hierarchyLevel>
+<MD_ScopeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_ScopeCode" codeListValue="dataset" codeSpace="ISOTC211/19115">dataset</MD_ScopeCode>
+</hierarchyLevel>
+<contact>
+<CI_ResponsibleParty>
+<individualName>
+<gco:CharacterString>GIS Database Administrator</gco:CharacterString>
+</individualName>
+<organisationName>
+<gco:CharacterString>VT Center for Geographic Information</gco:CharacterString>
+</organisationName>
+<contactInfo>
+<CI_Contact>
+<phone>
+<CI_Telephone>
+<voice>
+<gco:CharacterString>802/882-3002</gco:CharacterString>
+</voice>
+<voice>
+<gco:CharacterString>None</gco:CharacterString>
+</voice>
+<facsimile>
+<gco:CharacterString>802/828-3383</gco:CharacterString>
+</facsimile>
+</CI_Telephone>
+</phone>
+<address>
+<CI_Address>
+<deliveryPoint>
+<gco:CharacterString>1 National Life Dr., Davis Building, 6th Floor</gco:CharacterString>
+</deliveryPoint>
+<city>
+<gco:CharacterString>Montpelier</gco:CharacterString>
+</city>
+<administrativeArea>
+<gco:CharacterString>VT</gco:CharacterString>
+</administrativeArea>
+<postalCode>
+<gco:CharacterString>05620-0501</gco:CharacterString>
+</postalCode>
+<country>
+<Country codeList="http://www.iso.org/iso/country_codes/iso_3166_code_lists.htm" codeListValue="US" codeSpace="ISO3166-1">US</Country>
+</country>
+</CI_Address>
+</address>
+</CI_Contact>
+</contactInfo>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="pointOfContact" codeSpace="ISOTC211/19115">pointOfContact</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</contact>
+<dateStamp>
+<gco:Date>2010-06-09</gco:Date>
+</dateStamp>
+<metadataStandardName>
+<gco:CharacterString>NAP - Metadata</gco:CharacterString>
+</metadataStandardName>
+<metadataStandardVersion>
+<gco:CharacterString>1.2</gco:CharacterString>
+</metadataStandardVersion>
+<spatialRepresentationInfo>
+<MD_VectorSpatialRepresentation>
+<geometricObjects>
+<MD_GeometricObjects>
+<geometricObjectType>
+<MD_GeometricObjectTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_GeometricObjectTypeCode" codeListValue="composite" codeSpace="ISOTC211/19115">composite</MD_GeometricObjectTypeCode>
+</geometricObjectType>
+<geometricObjectCount>
+<gco:Integer>115481</gco:Integer>
+</geometricObjectCount>
+</MD_GeometricObjects>
+</geometricObjects>
+</MD_VectorSpatialRepresentation>
+</spatialRepresentationInfo>
+<referenceSystemInfo>
+<MD_ReferenceSystem>
+<referenceSystemIdentifier>
+<RS_Identifier>
+<code>
+<gco:CharacterString>32145</gco:CharacterString>
+</code>
+<codeSpace>
+<gco:CharacterString>EPSG</gco:CharacterString>
+</codeSpace>
+</RS_Identifier>
+</referenceSystemIdentifier>
+</MD_ReferenceSystem>
+</referenceSystemInfo>
+<identificationInfo>
+<MD_DataIdentification>
+<citation>
+<CI_Citation>
+<title>
+<gco:CharacterString>WaterHydro_VHDCARTO</gco:CharacterString>
+</title>
+<date>
+<CI_Date>
+<date>
+<gco:Date>2010-06-09</gco:Date>
+</date>
+<dateType>
+<CI_DateTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" codeSpace="ISOTC211/19115">publication</CI_DateTypeCode>
+</dateType>
+</CI_Date>
+</date>
+<citedResponsibleParty>
+<CI_ResponsibleParty>
+<organisationName>
+<gco:CharacterString>U.S. Geological Survey in cooperation with U.S. Environmental Protection Agency and the Vermont Center for Geographic Information, Inc.</gco:CharacterString>
+</organisationName>
+<contactInfo gco:nilReason="missing"/>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="originator" codeSpace="ISOTC211/19115">originator</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</citedResponsibleParty>
+<citedResponsibleParty>
+<CI_ResponsibleParty>
+<organisationName>
+<gco:CharacterString>VCGI, Inc.</gco:CharacterString>
+</organisationName>
+<contactInfo>
+<CI_Contact>
+<address>
+<CI_Address>
+<deliveryPoint>
+<gco:CharacterString>Waterbury, VT</gco:CharacterString>
+</deliveryPoint>
+</CI_Address>
+</address>
+</CI_Contact>
+</contactInfo>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="publisher" codeSpace="ISOTC211/19115">publisher</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</citedResponsibleParty>
+<presentationForm>
+<CI_PresentationFormCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_PresentationFormCode" codeListValue="mapDigital" codeSpace="ISOTC211/19115">mapDigital</CI_PresentationFormCode>
+</presentationForm>
+</CI_Citation>
+</citation>
+<abstract>
+<gco:CharacterString>(Link to Metadata) LKCH5K is an extract of Lake Champlain that is derived from VHDCARTO. The following metadata is from VHDCARTO.VHDCARTO is a simplified version of the local resolution Vermont Hydrography Dataset (VHD) that has been enriched with stream perenniality, e.g., &amp;quot;intermittent&amp;quot; vs. &amp;quot;perennial&amp;quot;, as well as, Strahler stream order attribution for the single linear feature class only. The primary means of accessing this information cartographically is via the FCODE and STREAM_ORDER fields, respectively. See the Entity and Attribution Information section for details. NOTE! Perenniality data does not exist for stream reaches contained within, or intersected by, Essex or Caledonia counties, thus the FCODE &amp;quot;46000&amp;quot; in these areas. The absence of Soil SUrvey GeOgraphic (SSURGO) database information in these areas precluded the computation of perenniality. These areas will be processed at some future date. For information on the FCODE symbol for attribution or analysis see the following document http://nhd.usgs.gov/NHDinGEO_FCodes_by_layer.pdf (NHDFlowline). A two dimensional feature class for lakes, ponds and larger streams is also included in VHDCARTO. Both layers are derived from the latest National Hydrography Dataset (NHD) data. The NHD is a feature-based database that interconnects and uniquely identifies the stream segments or reaches that make up the nation's surface water drainage system. For information on the science behind computing perenniality attribution please refer to the following U.S. Geological Survey Scientific Investigative Report (SIR) # 2006-5217 - http://pubs.usgs.gov/sir/2006/5217/pdf/SIR2006-5217_report.pdf</gco:CharacterString>
+</abstract>
+<purpose>
+<gco:CharacterString>This data is a subset of VHDCARTO representing Lake Champlain. The purpose of VHDCARTO is to provide a simplified version of the Vermont Hydrography Dataset (VHD) for cartographic purposes that includes "perenniality" and Strahler stream order attribution. For full metadata on Local resolution NHD data follow this link: http://nhdgeo.usgs.gov/metadata/nhd_local.htm.</gco:CharacterString>
+</purpose>
+<credit>
+<gco:CharacterString>See dataset specific metadata.</gco:CharacterString>
+</credit>
+<status>
+<MD_ProgressCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_ProgressCode" codeListValue="completed" codeSpace="ISOTC211/19115">completed</MD_ProgressCode>
+</status>
+<pointOfContact>
+<CI_ResponsibleParty>
+<organisationName>
+<gco:CharacterString>VT Center for Geographic Information</gco:CharacterString>
+</organisationName>
+<contactInfo>
+<CI_Contact>
+<phone>
+<CI_Telephone>
+<voice>
+<gco:CharacterString>802/882-3002</gco:CharacterString>
+</voice>
+<voice>
+<gco:CharacterString>None</gco:CharacterString>
+</voice>
+<facsimile>
+<gco:CharacterString>802/828-3383</gco:CharacterString>
+</facsimile>
+</CI_Telephone>
+</phone>
+<address>
+<CI_Address>
+<deliveryPoint>
+<gco:CharacterString>1 National Life Dr., Davis Building, 6th Floor</gco:CharacterString>
+</deliveryPoint>
+<city>
+<gco:CharacterString>Montpelier</gco:CharacterString>
+</city>
+<administrativeArea>
+<gco:CharacterString>VT</gco:CharacterString>
+</administrativeArea>
+<postalCode>
+<gco:CharacterString>05620-0501</gco:CharacterString>
+</postalCode>
+<country>
+<Country codeList="http://www.iso.org/iso/country_codes/iso_3166_code_lists.htm" codeListValue="US" codeSpace="ISO3166-1">US</Country>
+</country>
+<electronicMailAddress>
+<gco:CharacterString>accd.vcgiinfo@vermont.gov</gco:CharacterString>
+</electronicMailAddress>
+</CI_Address>
+</address>
+<hoursOfService>
+<gco:CharacterString>9am - 5pm, M-F</gco:CharacterString>
+</hoursOfService>
+</CI_Contact>
+</contactInfo>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="pointOfContact" codeSpace="ISOTC211/19115">pointOfContact</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</pointOfContact>
+<resourceMaintenance>
+<MD_MaintenanceInformation>
+<maintenanceAndUpdateFrequency>
+<MD_MaintenanceFrequencyCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_MaintenanceFrequencyCode" codeListValue="irregular" codeSpace="ISOTC211/19115">irregular</MD_MaintenanceFrequencyCode>
+</maintenanceAndUpdateFrequency>
+</MD_MaintenanceInformation>
+</resourceMaintenance>
+<descriptiveKeywords>
+<MD_Keywords>
+<keyword>
+<gco:CharacterString>Vermont</gco:CharacterString>
+</keyword>
+<type>
+<MD_KeywordTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="place" codeSpace="ISOTC211/19115">place</MD_KeywordTypeCode>
+</type>
+<thesaurusName>
+<CI_Citation>
+<title>
+<gco:CharacterString>U.S. Department of Commerce, 1977, Countries, dependencies, areas of special sovereignty, and their principal administrative divisions (Federal Information Processing Standards 10-3): Washington, D.C., National Institute of Standards and Technology.</gco:CharacterString>
+</title>
+<date gco:nilReason="missing"/>
+<citedResponsibleParty gco:nilReason="missing"/>
+</CI_Citation>
+</thesaurusName>
+</MD_Keywords>
+</descriptiveKeywords>
+<descriptiveKeywords>
+<MD_Keywords>
+<keyword>
+<gco:CharacterString>VHD Carto</gco:CharacterString>
+</keyword>
+<keyword>
+<gco:CharacterString>Hydrography</gco:CharacterString>
+</keyword>
+<type>
+<MD_KeywordTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme" codeSpace="ISOTC211/19115">theme</MD_KeywordTypeCode>
+</type>
+<thesaurusName>
+<CI_Citation>
+<title>
+<gco:CharacterString>U.S. Department of the Interior, U.S. Geological Survey, 1999, Standards for National Hydrography Dataset. (http://mapping.usgs.gov/standards/)</gco:CharacterString>
+</title>
+<date gco:nilReason="missing"/>
+<citedResponsibleParty gco:nilReason="missing"/>
+</CI_Citation>
+</thesaurusName>
+</MD_Keywords>
+</descriptiveKeywords>
+<descriptiveKeywords>
+<MD_Keywords>
+<keyword>
+<gco:CharacterString>VHD Carto</gco:CharacterString>
+</keyword>
+<keyword>
+<gco:CharacterString>Hydrography</gco:CharacterString>
+</keyword>
+<type>
+<MD_KeywordTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="theme" codeSpace="ISOTC211/19115">theme</MD_KeywordTypeCode>
+</type>
+<thesaurusName>
+<CI_Citation>
+<title>
+<gco:CharacterString>U.S. Department of the Interior, U.S. Geological Survey, 1999, Standards for National Hydrography Dataset. (http://mapping.usgs.gov/standards/)</gco:CharacterString>
+</title>
+<date gco:nilReason="missing"/>
+<citedResponsibleParty gco:nilReason="missing"/>
+</CI_Citation>
+</thesaurusName>
+</MD_Keywords>
+</descriptiveKeywords>
+<resourceConstraints>
+<MD_Constraints>
+<useLimitation>
+<gco:CharacterString>None. Acknowledgment of the originating agencies would be appreciated in products derived from these data.</gco:CharacterString>
+</useLimitation>
+</MD_Constraints>
+</resourceConstraints>
+<resourceConstraints>
+<MD_LegalConstraints>
+<useLimitation>
+<gco:CharacterString>VCGI and the State of Vermont make no representations of any kind, including but not limited to the warranties of merchantability or fitness for a particular use, nor are any such warranties to be implied with respect to the data.</gco:CharacterString>
+</useLimitation>
+<otherConstraints>
+<gco:CharacterString>VCGI and the State of Vermont make no representations of any kind, including but not limited to the warranties of merchantability or fitness for a particular use, nor are any such warranties to be implied with respect to the data.</gco:CharacterString>
+</otherConstraints>
+</MD_LegalConstraints>
+</resourceConstraints>
+<resourceConstraints>
+<MD_SecurityConstraints>
+<classification>
+<MD_ClassificationCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_ClassificationCode" codeListValue="unclassified" codeSpace="ISOTC211/19115">unclassified</MD_ClassificationCode>
+</classification>
+</MD_SecurityConstraints>
+</resourceConstraints>
+<spatialRepresentationType>
+<MD_SpatialRepresentationTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_SpatialRepresentationTypeCode" codeListValue="vector" codeSpace="ISOTC211/19115">vector</MD_SpatialRepresentationTypeCode>
+</spatialRepresentationType>
+<language>
+<LanguageCode codeList="http://www.loc.gov/standards/iso639-2/php/code_list.php" codeListValue="eng" codeSpace="ISO639-2">eng</LanguageCode>
+</language>
+<characterSet>
+<MD_CharacterSetCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_CharacterSetCode" codeListValue="utf8" codeSpace="ISOTC211/19115">utf8</MD_CharacterSetCode>
+</characterSet>
+<environmentDescription>
+<gco:CharacterString>Microsoft Windows XP Version 5.1 (Build 2600) Service Pack 2; ESRI ArcCatalog 9.2.4.1420</gco:CharacterString>
+</environmentDescription>
+<extent>
+<EX_Extent>
+<geographicElement>
+<EX_GeographicBoundingBox>
+<westBoundLongitude>
+<gco:Decimal>-73.74271</gco:Decimal>
+</westBoundLongitude>
+<eastBoundLongitude>
+<gco:Decimal>-71.464335</gco:Decimal>
+</eastBoundLongitude>
+<southBoundLatitude>
+<gco:Decimal>42.559606</gco:Decimal>
+</southBoundLatitude>
+<northBoundLatitude>
+<gco:Decimal>45.059295</gco:Decimal>
+</northBoundLatitude>
+</EX_GeographicBoundingBox>
+</geographicElement>
+</EX_Extent>
+</extent>
+<extent>
+<EX_Extent>
+<description>
+<gco:CharacterString>ground condition of source orthophotos</gco:CharacterString>
+</description>
+<temporalElement>
+<EX_TemporalExtent>
+<extent>
+<gml:TimePeriod gml:id="N65712">
+<gml:beginPosition>1994-01-01</gml:beginPosition>
+<gml:endPosition>2010-01-01</gml:endPosition>
+</gml:TimePeriod>
+</extent>
+</EX_TemporalExtent>
+</temporalElement>
+</EX_Extent>
+</extent>
+</MD_DataIdentification>
+</identificationInfo>
+<distributionInfo>
+<MD_Distribution>
+<distributionFormat>
+<MD_Format>
+<name>
+<gco:CharacterString>SHP</gco:CharacterString>
+</name>
+<version gco:nilReason="missing"/>
+<specification>
+<gco:CharacterString>ESRI Shapefile format (compressed into ZIP file format)</gco:CharacterString>
+</specification>
+<fileDecompressionTechnique>
+<gco:CharacterString>ZIP extraction tool</gco:CharacterString>
+</fileDecompressionTechnique>
+</MD_Format>
+</distributionFormat>
+<distributor>
+<MD_Distributor>
+<distributorContact>
+<CI_ResponsibleParty>
+<organisationName>
+<gco:CharacterString>VT Center for Geographic Information</gco:CharacterString>
+</organisationName>
+<contactInfo>
+<CI_Contact>
+<phone>
+<CI_Telephone>
+<voice>
+<gco:CharacterString>802/882-3002</gco:CharacterString>
+</voice>
+<voice>
+<gco:CharacterString>None</gco:CharacterString>
+</voice>
+<facsimile>
+<gco:CharacterString>802/828-3383</gco:CharacterString>
+</facsimile>
+</CI_Telephone>
+</phone>
+<address>
+<CI_Address>
+<deliveryPoint>
+<gco:CharacterString>1 National Life Dr., Davis Building, 6th Floor</gco:CharacterString>
+</deliveryPoint>
+<city>
+<gco:CharacterString>Montpelier</gco:CharacterString>
+</city>
+<administrativeArea>
+<gco:CharacterString>VT</gco:CharacterString>
+</administrativeArea>
+<postalCode>
+<gco:CharacterString>05620-0501</gco:CharacterString>
+</postalCode>
+<country>
+<Country codeList="http://www.iso.org/iso/country_codes/iso_3166_code_lists.htm" codeListValue="US" codeSpace="ISO3166-1">US</Country>
+</country>
+<electronicMailAddress>
+<gco:CharacterString>accd.vcgiinfo@vermont.gov</gco:CharacterString>
+</electronicMailAddress>
+</CI_Address>
+</address>
+<hoursOfService>
+<gco:CharacterString>9am - 5pm, M-F</gco:CharacterString>
+</hoursOfService>
+</CI_Contact>
+</contactInfo>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="distributor" codeSpace="ISOTC211/19115">distributor</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</distributorContact>
+<distributionOrderProcess>
+<MD_StandardOrderProcess>
+<fees>
+<gco:CharacterString>No charge when downloading from the internet, and when no custom processing is required.</gco:CharacterString>
+</fees>
+<plannedAvailableDateTime>
+<gco:DateTime>2010-06-09T00:00:00</gco:DateTime>
+</plannedAvailableDateTime>
+<orderingInstructions>
+<gco:CharacterString>Send an email describing data request to accd.vcgiinfo@vermont.gov</gco:CharacterString>
+</orderingInstructions>
+<turnaround>
+<gco:CharacterString>About 5 days.</gco:CharacterString>
+</turnaround>
+</MD_StandardOrderProcess>
+</distributionOrderProcess>
+</MD_Distributor>
+</distributor>
+<transferOptions>
+<MD_DigitalTransferOptions>
+<onLine>
+<CI_OnlineResource>
+<linkage>
+<URL>http://maps.vcgi.vermont.gov/gisdata/vcgi/packaged_zips/WaterHydro_LKCH5K.zip</URL>
+</linkage>
+<protocol gco:nilReason="missing"/>
+<name>
+<gco:CharacterString>Download Pre-packaged Data</gco:CharacterString>
+</name>
+<function>
+<CI_OnLineFunctionCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="download" codeSpace="ISOTC211/19115">download</CI_OnLineFunctionCode>
+</function>
+</CI_OnlineResource>
+</onLine>
+</MD_DigitalTransferOptions>
+</transferOptions>
+<transferOptions>
+<MD_DigitalTransferOptions>
+<onLine>
+<CI_OnlineResource>
+<linkage>
+<URL>http://maps.vcgi.vermont.gov/gisdata/vcgi/packaged_zips/WaterHydro_LKCH5K.zip</URL>
+</linkage>
+<protocol gco:nilReason="missing"/>
+<description>
+<gco:CharacterString>Download from web site.</gco:CharacterString>
+</description>
+</CI_OnlineResource>
+</onLine>
+</MD_DigitalTransferOptions>
+</transferOptions>
+<transferOptions>
+<MD_DigitalTransferOptions>
+<offLine>
+<MD_Medium>
+<name>
+<MD_MediumNameCode codeList="http://www.fgdc.gov/nap/metadata/register/codelists.html#napMD_MediumNameCode" codeListValue="USBFlashDrive" codeSpace="ISOTC211/19139/NAP">USBFlashDrive</MD_MediumNameCode>
+</name>
+</MD_Medium>
+</offLine>
+</MD_DigitalTransferOptions>
+</transferOptions>
+<transferOptions>
+<MD_DigitalTransferOptions/>
+</transferOptions>
+</MD_Distribution>
+</distributionInfo>
+<dataQualityInfo>
+<DQ_DataQuality>
+<scope>
+<DQ_Scope>
+<level>
+<MD_ScopeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_ScopeCode" codeListValue="dataset" codeSpace="ISOTC211/19115">dataset</MD_ScopeCode>
+</level>
+</DQ_Scope>
+</scope>
+<report>
+<DQ_ConceptualConsistency>
+<measureDescription>
+<gco:CharacterString>For full metadata on Local resolution NHD data follow this link - http://nhdgeo.usgs.gov/metadata/nhd_local.htm.</gco:CharacterString>
+</measureDescription>
+<result gco:nilReason="missing"/>
+</DQ_ConceptualConsistency>
+</report>
+<report>
+<DQ_CompletenessOmission>
+<measureDescription>
+<gco:CharacterString>For full metadata on Local resolution NHD data follow this link - http://nhdgeo.usgs.gov/metadata/nhd_local.htm.</gco:CharacterString>
+</measureDescription>
+<result gco:nilReason="missing"/>
+</DQ_CompletenessOmission>
+</report>
+<report>
+<DQ_QuantitativeAttributeAccuracy>
+<measureDescription>
+<gco:CharacterString>For full metadata on Local resolution NHD data follow this link - http://nhdgeo.usgs.gov/metadata/nhd_local.htm.</gco:CharacterString>
+</measureDescription>
+<result gco:nilReason="missing"/>
+</DQ_QuantitativeAttributeAccuracy>
+</report>
+<report>
+<DQ_AbsoluteExternalPositionalAccuracy>
+<measureDescription>
+<gco:CharacterString>For full metadata on Local resolution NHD data follow this link - http://nhdgeo.usgs.gov/metadata/nhd_local.htm.</gco:CharacterString>
+</measureDescription>
+<result gco:nilReason="missing"/>
+</DQ_AbsoluteExternalPositionalAccuracy>
+</report>
+<report>
+<DQ_AbsoluteExternalPositionalAccuracy>
+<measureDescription>
+<gco:CharacterString>For full metadata on Local resolution NHD data follow this link - http://nhdgeo.usgs.gov/metadata/nhd_local.htm.</gco:CharacterString>
+</measureDescription>
+<result gco:nilReason="missing"/>
+</DQ_AbsoluteExternalPositionalAccuracy>
+</report>
+<lineage>
+<LI_Lineage>
+<processStep>
+<LI_ProcessStep>
+<description>
+<gco:CharacterString>Added 10 missing islands on the NY side of the lake from best available imagery. Islands have not been added to the master VHD dataset, only VHDCARTO.</gco:CharacterString>
+</description>
+<processor>
+<CI_ResponsibleParty>
+<individualName>
+<gco:CharacterString>Steve Sharp</gco:CharacterString>
+</individualName>
+<organisationName>
+<gco:CharacterString>VCGI, Inc.</gco:CharacterString>
+</organisationName>
+<positionName>
+<gco:CharacterString>Database Administrator</gco:CharacterString>
+</positionName>
+<contactInfo gco:nilReason="missing"/>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="processor" codeSpace="ISOTC211/19115">processor</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</processor>
+</LI_ProcessStep>
+</processStep>
+<processStep>
+<LI_ProcessStep>
+<description>
+<gco:CharacterString>Updated delineation of Lake Willoughby on SE side to reflect actual shoreline. Original delineation confounded by shadow on source ortho made by Mt. Pisgah.</gco:CharacterString>
+</description>
+<processor>
+<CI_ResponsibleParty>
+<individualName>
+<gco:CharacterString>Mike Brouillette</gco:CharacterString>
+</individualName>
+<organisationName>
+<gco:CharacterString>VCGI, Inc.</gco:CharacterString>
+</organisationName>
+<positionName>
+<gco:CharacterString>Senior Project Manager</gco:CharacterString>
+</positionName>
+<contactInfo gco:nilReason="missing"/>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="processor" codeSpace="ISOTC211/19115">processor</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</processor>
+</LI_ProcessStep>
+</processStep>
+<processStep>
+<LI_ProcessStep>
+<description>
+<gco:CharacterString>Edited NY and Quebec boundaries of Lake Champlain using 1:24k NHD Watershed_Area feature and 1:50k (or better) National Hydro Network (NHN) data created by the Government of Canada, Natural Resources Canada, Earth Sciences Sector, Mapping Services Branch, Centre for Topographic Information - Sherbrooke (published 2008-02-20), respectively.</gco:CharacterString>
+</description>
+<processor>
+<CI_ResponsibleParty>
+<individualName>
+<gco:CharacterString>Mike Brouillette</gco:CharacterString>
+</individualName>
+<organisationName>
+<gco:CharacterString>VCGI, Inc.</gco:CharacterString>
+</organisationName>
+<positionName>
+<gco:CharacterString>Senior Project Manager</gco:CharacterString>
+</positionName>
+<contactInfo gco:nilReason="missing"/>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="processor" codeSpace="ISOTC211/19115">processor</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</processor>
+</LI_ProcessStep>
+</processStep>
+<processStep>
+<LI_ProcessStep>
+<description>
+<gco:CharacterString>Redownloaded latest NHDGEOinSHP data for local resolution Vermont NHD and applied the Logistic Regression Equation to produce stream perenniality, e.g., "intermittent" vs. "perennial" stream flow. Also added the recently released Value Added Attribute (VAA) item "Stream_Order" (Strahler).</gco:CharacterString>
+</description>
+<processor>
+<CI_ResponsibleParty>
+<individualName>
+<gco:CharacterString>Mike Brouillette</gco:CharacterString>
+</individualName>
+<organisationName>
+<gco:CharacterString>VCGI, Inc.</gco:CharacterString>
+</organisationName>
+<positionName>
+<gco:CharacterString>Senior Project Manager</gco:CharacterString>
+</positionName>
+<contactInfo gco:nilReason="missing"/>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="processor" codeSpace="ISOTC211/19115">processor</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</processor>
+</LI_ProcessStep>
+</processStep>
+<processStep>
+<LI_ProcessStep>
+<description>
+<gco:CharacterString>Edited the Lake Champlain Lake feature to reflect the following islands: Button, Cave, Cedar, Dean, Garden, Gull, Juniper, Law, Marble, Mason, Picket, Rock, Ship Point, Sloop and Sunset.</gco:CharacterString>
+</description>
+<processor>
+<CI_ResponsibleParty>
+<individualName>
+<gco:CharacterString>Mike Brouillette</gco:CharacterString>
+</individualName>
+<organisationName>
+<gco:CharacterString>VCGI, Inc.</gco:CharacterString>
+</organisationName>
+<positionName>
+<gco:CharacterString>Senior Project Manager</gco:CharacterString>
+</positionName>
+<contactInfo gco:nilReason="missing"/>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="processor" codeSpace="ISOTC211/19115">processor</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</processor>
+</LI_ProcessStep>
+</processStep>
+<processStep>
+<LI_ProcessStep>
+<description>
+<gco:CharacterString>Acquired statewide NHDGEOinSHP data from USGS and removed extraneous attributes for use in cartographic operations only.</gco:CharacterString>
+</description>
+<dateTime>
+<gco:DateTime>2007-05-04T00:00:00</gco:DateTime>
+</dateTime>
+<processor>
+<CI_ResponsibleParty>
+<individualName>
+<gco:CharacterString>Mike Brouillette</gco:CharacterString>
+</individualName>
+<organisationName>
+<gco:CharacterString>VCGI, Inc.</gco:CharacterString>
+</organisationName>
+<positionName>
+<gco:CharacterString>Senior Project Manager</gco:CharacterString>
+</positionName>
+<contactInfo gco:nilReason="missing"/>
+<role>
+<CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="processor" codeSpace="ISOTC211/19115">processor</CI_RoleCode>
+</role>
+</CI_ResponsibleParty>
+</processor>
+</LI_ProcessStep>
+</processStep>
+<source>
+<LI_Source>
+<description>
+<gco:CharacterString>Spatial and attribute information</gco:CharacterString>
+</description>
+<scaleDenominator>
+<MD_RepresentativeFraction>
+<denominator>
+<gco:Integer>24000</gco:Integer>
+</denominator>
+</MD_RepresentativeFraction>
+</scaleDenominator>
+<sourceCitation>
+<CI_Citation>
+<title>
+<gco:CharacterString>NHD basic features</gco:CharacterString>
+</title>
+<date gco:nilReason="missing"/>
+<citedResponsibleParty gco:nilReason="missing"/>
+</CI_Citation>
+</sourceCitation>
+<sourceExtent>
+<EX_Extent>
+<description>
+<gco:CharacterString>Date the revision process step was completed</gco:CharacterString>
+</description>
+</EX_Extent>
+</sourceExtent>
+</LI_Source>
+</source>
+<source>
+<LI_Source>
+<description>
+<gco:CharacterString>Updated Subbasin boundaries</gco:CharacterString>
+</description>
+<sourceCitation>
+<CI_Citation>
+<title>
+<gco:CharacterString>Subbasin boundaries (formerly called Cataloging Unit Boundaries)</gco:CharacterString>
+</title>
+<date gco:nilReason="missing"/>
+<citedResponsibleParty gco:nilReason="missing"/>
+</CI_Citation>
+</sourceCitation>
+<sourceExtent>
+<EX_Extent>
+<description>
+<gco:CharacterString>(see dataset specific metadata)</gco:CharacterString>
+</description>
+</EX_Extent>
+</sourceExtent>
+</LI_Source>
+</source>
+<source>
+<LI_Source>
+<description>
+<gco:CharacterString>Reach codes and flow direction attributes</gco:CharacterString>
+</description>
+<scaleDenominator>
+<MD_RepresentativeFraction>
+<denominator>
+<gco:Integer>5000</gco:Integer>
+</denominator>
+</MD_RepresentativeFraction>
+</scaleDenominator>
+<sourceCitation>
+<CI_Citation>
+<title>
+<gco:CharacterString>National Hydrography Dataset (NHD)</gco:CharacterString>
+</title>
+<date>
+<CI_Date>
+<date>
+<gco:Date>1999-01-01</gco:Date>
+</date>
+<dateType>
+<CI_DateTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication" codeSpace="ISOTC211/19115">publication</CI_DateTypeCode>
+</dateType>
+</CI_Date>
+</date>
+<citedResponsibleParty gco:nilReason="missing"/>
+</CI_Citation>
+</sourceCitation>
+<sourceExtent>
+<EX_Extent>
+<description>
+<gco:CharacterString>publication date</gco:CharacterString>
+</description>
+<temporalElement>
+<EX_TemporalExtent>
+<extent>
+<gml:TimeInstant gml:id="N66075">
+<gml:timePosition>1999-01-01</gml:timePosition>
+</gml:TimeInstant>
+</extent>
+</EX_TemporalExtent>
+</temporalElement>
+</EX_Extent>
+</sourceExtent>
+</LI_Source>
+</source>
+</LI_Lineage>
+</lineage>
+</DQ_DataQuality>
+</dataQualityInfo>
+</MD_Metadata>
