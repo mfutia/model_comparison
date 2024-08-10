@@ -13,9 +13,7 @@
 ### Load packages
 ###----------------------------------------------------------------------------------------------------
 library(sf)
-library(glmmTMB)
-library(emmeans)
-library(MuMIn)
+library(mgcv)
 library(glatos)
 library(data.table)
 library(tidyverse)
@@ -276,59 +274,42 @@ region_int_day <- lkt_int_final %>%
   group_by(animal_id, regions, date_detect, .drop = F) %>% 
   reframe(region_detect = length(bin_timestamp)) %>% 
   unique() %>% 
-  left_join(unique(lkt_int_final[,c("date_detect","season_year")])) %>% 
-  filter(animal_id %in% unique(lkt_int_final$animal_id))
+  left_join(unique(lkt_int_final[,c("animal_id","cap_site","sex","date_detect","season_year")])) %>% # add "animal_id","cap_site","sex" to this line
+  filter(animal_id %in% unique(lkt_int_final$animal_id)) %>% 
+  mutate(day_detect = 24) ##### add this line
 
-# add year_group back in to data frame
-region_int_day <- left_join(region_int_day, unique(lkt_int_final[,c("season_year","year_group")])) %>% 
-  na.omit()
-
-# calculate total number of detections for each transmitter by season and year
-total_detect_int_day <- region_int_day %>% 
-  group_by(animal_id, date_detect) %>% 
-  reframe(day_detect = sum(region_detect)) %>% 
-  unique()
-
-# calculate average receiver latitude
-rec_lat_int <- aggregate(latitude~regions, data = lkt_int_final, FUN = mean)
-
-# merge number of detections for each fish in each region with total detections for each fish 
-region_int_full_day <- left_join(region_int_day, total_detect_int_day) %>% 
-  left_join(rec_lat_int) %>% 
-  left_join(fish_data[,c("animal_id","cap_site","sex")]) # add cap site
-
-# calculate seasonal percentage of detections in each basin for each fish
-region_int_full_day <- region_int_full_day %>% 
-  mutate(region_percent = round((region_detect*100/day_detect), digits = 1), # replace monthly_detect with day_detect
+# calculate daily percentage of detections in each basin for each fish
+region_int_day <- region_int_day %>%  
+  mutate(region_percent = round((region_detect*100/day_detect), digits = 1), 
          region_percent = if_else(region_percent %in% NaN, 0, region_percent), # convert NaN values to 0
          region_prop = region_percent/100,
-         region_beta = (region_prop*(nrow(region_int_full_day)-1)+0.5)/nrow(region_int_full_day))
+         region_beta = (region_prop*(nrow(region_int_day)-1)+0.5)/nrow(region_int_day))
 
 
-### remove periods when fish were not active
+### Remove periods when fish were not active
 # create factor list of all dates
 all_dates <- sort(unique(lkt_int_final$date_detect))
 
 # identify active periods for each fish (season/years between first and last detection)
 active_days_int <- lkt_int_final %>% 
   group_by(animal_id) %>% 
-  reframe(first = min(date_detect), # replace mm_yy with season_year
-          last = max(date_detect), # replace mm_yy with season_year
+  reframe(first = min(date_detect),
+          last = max(date_detect),
           all = list(all_dates[all_dates >= first & all_dates <= last])) %>% 
   unique()
 
-# merge active periods with basin occupancy
-region_int_full_day <- left_join(region_int_full_day, active_days_int)
+# merge active periods with region occupancy
+region_int_day <- left_join(region_int_day, active_days_int)
 
 # remove periods when fish were not active (before first detection; after last detection)
-region_int_final_day <- region_int_full_day %>% 
+region_int_day <- region_int_day %>% 
   group_by(animal_id) %>% 
   filter(date_detect %in% unlist(all)) %>% # remove periods outside of detection window
   ungroup() %>% 
   filter(region_percent %!in% NaN) # remove NaN values for incomplete seasons (first and last), shouldn't change anything
 
-### create season column 
-region_int_final_day <- region_int_final_day %>% 
+### Create season column 
+region_int_day <- region_int_day %>% 
   mutate(season = case_when(grepl("Spring", season_year) ~ "Spring",
                             grepl("Summer", season_year) ~ "Summer",
                             grepl("Fall", season_year) ~ "Fall",
@@ -352,64 +333,88 @@ lkt_detects_live %>%
                              regions %in% "South Lake" ~ "South Lake")) %>% 
   aggregate(animal_id~regions, FUN = n_distinct)
 
-region_int_final_day %>%
+region_int_day %>%
   filter(region_percent > 0) %>%
   group_by(regions) %>% 
   reframe(n_fish = n_distinct(animal_id)) %>% 
-  mutate(total_fish = n_distinct(region_int_final_day$animal_id),
+  mutate(total_fish = n_distinct(region_int_day$animal_id),
          per_fish = n_fish*100/total_fish)
 
 
-### Generate glmm for lake trout distribution
-# visualize data
-hist(region_int_final_day$region_beta)
-
-summary(region_int_final_day$region_beta)
-
-summary(region_int_final_day)
-str(region_int_final_day)
+### Generate mixed multinomial logistic regression (Mlogit) for lake trout distribution
+# remove regions with no detections
+region_short <- region_int_day %>% 
+  filter(regions != "Missisquoi Bay") %>% 
+  mutate(regions = factor(regions, 
+                          levels = c("Northeast Arm","Malletts Bay","Main Lake North","Main Lake Central","Main Lake South","South Lake")))
 
 
-# create glmm using proportional data
-dist_mod <- glmmTMB(region_beta~regions*cap_site+sex+(1|animal_id),
-                    data = region_int_final_day,
-                    family = "beta_family",
-                    na.action = "na.fail")
+# run global Mlogit model
+lkt_mlogit_full <- gam(list(region_beta~cap_site*regions + sex + s(animal_id, bs='re')),
+                       family = multinom(K = 1),
+                       data = region_short)
+
+# evaluate significance of model parameters
+summary(lkt_mlogit_full) # sex insignificant
+
+# run Mlogit model excluding sex
+lkt_mlogit_nsex <- gam(list(region_beta~cap_site*regions + s(animal_id, bs='re')),
+                       family = multinom(K = 1),
+                       data = region_short)
+
+# compare AIC
+lkt_mlogit_full$aic # -296004.2
+lkt_mlogit_nsex$aic # -296006.2 * lowest AIC and 1 less factor
+
+# identify the animal ID associated with the smallest effect to use for calculating marginal means
+cffs <- lkt_mlogit_nsex$coefficients  
+min_lkt <- cffs[grep("animal_id", names(cffs))]
+lkt_min <- min_lkt[which(abs(min_lkt) == min(abs(min_lkt)))]
+
+# create object with all combinations of fixed effects
+regions <- levels(region_short$regions)
+cap_site <- levels(region_short$cap_site)
+animal_id <- levels(region_short$animal_id)[6]
+
+newdat <- expand.grid(regions, cap_site, animal_id)
+names(newdat) <- c("regions", "cap_site", "animal_id")
+
+# calculate marginal means for each fixed effect
+preds <- predict.gam(lkt_mlogit_nsex,
+                     newdata = newdat, 
+                     type = "response", 
+                     se.fit = T)
+
+# add marginal means to the new data object
+newdat <- newdat %>% 
+  mutate(est_prop = preds$fit[,2],
+         se_prop = preds$se.fit[,2],
+         CI_lo = est_prop - se_prop*1.96,
+         CI_up = est_prop + se_prop*1.96)
+
+# visualize estimated marginal means with 95% CI
+predict_plot <- newdat %>% 
+  ggplot(aes(x = regions, y = est_prop)) +
+  geom_errorbar(aes(ymin = CI_lo, ymax = CI_up, color = cap_site), position = position_dodge(0.9), width = 0.25) +
+  geom_point(aes(fill = cap_site, shape = cap_site), position = position_dodge(0.9)) +
+  scale_fill_manual(values = c("#B3D1B3","#E3BCFB")) +
+  scale_color_manual(values = c("black","black")) +
+  scale_shape_manual(values = 21:22) +
+  theme_classic()
+
+predict_plot
 
 
-# view model output
-summary(dist_mod) # multiple significant differences among regions
-
-# dredge
-mod_sel_dist <- dredge(dist_mod,
-                       trace = T)
-
-best_meta_dist <- subset(mod_sel_dist, delta<2)
-best_meta_dist <- subset(best_meta_dist, !is.na(delta))
-rowind_dist <- which(best_meta_dist$df==min(best_meta_dist$df))
-best_meta_dist <- get.models(best_meta_dist, subset=rowind_dist)[[1]]
-
-mod_sum_dist <- summary(best_meta_dist) 
-mod_sum_dist
-
-# model output as df
-mod_dist_df <- data.frame(mod_sum_dist$coefficients$cond) %>% 
-  round(., 4) %>% 
-  rownames_to_column(var = "Parameter") 
-
-mod_dist_df
-
-
-### visualize differences among regions and cap locations by season
+### Visualize differences among regions and cap locations by season
 # calculate seasonal average of region use for each fish
-lkt_region_season <- region_int_final_day %>% 
+lkt_region_season <- region_int_day %>% 
   group_by(animal_id,regions,season_year,season) %>% 
   reframe(region_percent = mean(region_percent),
           cap_site = unique(cap_site))
 
 
-### Average basin use as a function of region and release site
-lkt_reg_use <- region_int_final_day %>% 
+### Average region use as a function of region and release site
+lkt_reg_use <- region_int_day %>% 
   group_by(cap_site,regions) %>% 
   reframe(ave_use = round(mean(region_percent),1),
           sd_use = round(sd(region_percent),1))
@@ -417,51 +422,10 @@ lkt_reg_use <- region_int_final_day %>%
 lkt_reg_use
 
 
-# averages based on predict function
-newdat <- region_int_final_day %>%
-  group_by(animal_id, cap_site, regions, year_group, .drop = F) %>% 
-  reframe(`cap_site:regions` = paste(regions, cap_site, sep = " ")) %>% 
-  unique()
-
-est_use <- predict(best_meta_dist, 
-                   newdat,
-                   se.fit = T)
-
-est_use_df <- data.frame(matrix(unlist(est_use),
-                                nrow = nrow(newdat),
-                                byrow = F),
-                         stringsAsFactors = F)
-
-newdata <- bind_cols(newdat,est_use_df) %>% 
-  mutate(ll_logit = X1-X2,
-         ul_logit = X1+X2,
-         ave = exp(X1)/(1+exp(X1))*100,
-         se_ll = exp(ll_logit)/(1+exp(ll_logit))*100,
-         se_ul = exp(ul_logit)/(1+exp(ul_logit))*100) %>% 
-  unique()
-
-sum_predict <- newdata %>% 
-  group_by(regions, cap_site) %>% 
-  reframe(ave_pred = mean(ave),
-          sd_pred = sd(ave))
-
-sum_predict
-
-
-### emmeans to test pairwise comparisons
-mod_emm_dist <- emmeans(best_meta_dist, specs = c("regions","cap_site"))
-mod_p_dist <- pwpm(mod_emm_dist)
-
-mod_p_dist_df <- matrix(mod_p_dist,
-                        ncol = 14,
-                        dimnames = list(rownames(mod_p_dist),rownames(mod_p_dist))) %>% 
-  data.frame()
-
-
 ### Number of individuals from North and South capture sites with no use of region
 # number of fish tagged at each site
 stock_n <- fish_data %>% 
-  filter(animal_id %in% region_int_final_day$animal_id) %>% 
+  filter(animal_id %in% region_int_day$animal_id) %>% 
   group_by(cap_site) %>% 
   reframe(n_fish = n_distinct(animal_id))
 
