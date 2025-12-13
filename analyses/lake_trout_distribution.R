@@ -195,8 +195,8 @@ lkt_detects_cut <- lkt_detects %>%
 
 # remove dead fish 
 lkt_detects_live <- lkt_detects_cut %>%
-  filter(animal_id %!in% animal_id[c(3,16,28,53)]) %>%
-  filter(animal_id %!in% animal_id[72] & glatos_array %!in% "Willsboro")
+  filter(animal_id %!in% c(24322,24335,24347,24381)) %>%
+  filter(animal_id %!in% 26786 | glatos_array %!in% "Willsboro")
 
 ### Interpolate path for each year with 60 min (3600 sec) timestamp
 lkt_int_60 <- interpolate_path(lkt_detects_live,
