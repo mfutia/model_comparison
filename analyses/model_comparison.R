@@ -80,10 +80,15 @@ model_est <- bind_rows(sim_base_region_full,
                        sim_move_region_full,
                        sim_rsp_region_full)
 
+# select required columns
+model_est_final <- model_est %>%
+  select(animal_id, regions, region_percent, model)
+
 # add true region use and calculate total and regional simulation duration
 model_full <- true_occ %>% 
   select(virt_fish,regions,region_positions,total_positions) %>% 
-  right_join(model_est) %>% 
+  mutate(animal_id = paste0("sim_", virt_fish)) %>% # create animal_id column for merging tables
+  right_join(model_est_final) %>% 
   mutate(region_dur = region_positions*127, # calculate duration by region for each simulation (127 = transmission delay (120 sec) + transmission duration (7 sec))   
          total_dur = total_positions*127, # calculate total duration of simulation in seconds
          region_wt = region_dur/total_dur, # calculate proportion of time spent in each region
